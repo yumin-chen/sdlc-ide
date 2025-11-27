@@ -61,9 +61,7 @@ The SDLC_IDE project uses a governance model based on the **Open Policy Agent (O
 
 ### Architecture Decision Records (ADRs)
 
-All significant architectural decisions are documented in **Architecture Decision Records (ADRs)**, which are stored in the `docs/architecture/design` directory. ADRs follow a strict naming convention to ensure consistency: `adr-XXX-kebab-case-description.md`, where `XXX` is the ADR number.
-
-ADRs are subject to a strict approval process, enforced by an OPA policy, which requires that they be submitted via a pull request and reviewed by the project maintainers.
+All significant architectural decisions are documented in **Architecture Decision Records (ADRs)**, which are stored in the `docs/adr` directory. ADRs are subject to a strict approval process, enforced by an OPA policy, which requires that they be submitted via a pull request and reviewed by the project maintainers.
 
 ### OPA Policy
 
