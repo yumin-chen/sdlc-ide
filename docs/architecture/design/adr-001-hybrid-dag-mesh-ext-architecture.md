@@ -6,8 +6,6 @@ project: SDLC_IDE
 author: System Architecture Team
 ---
 
-# ADR-ARC: Hybrid Directed Graph Architecture with Selective Mesh Extensions
-
 ## 1. Context
 
 The SDLC_IDE platform requires a multi-agent architecture capable of managing heterogeneous documentation types across the SDLC lifecycle while maintaining strict structural guarantees. The architecture must support:
