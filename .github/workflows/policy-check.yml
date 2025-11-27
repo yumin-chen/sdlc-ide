@@ -1,0 +1,67 @@
+name: 'OPA Policy Check'
+
+on:
+  pull_request:
+
+jobs:
+  policy-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install OPA
+        run: |
+          curl -L -o opa https://openpolicyagent.org/downloads/v0.62.1/opa_linux_amd64_static
+          chmod +x ./opa
+          sudo mv ./opa /usr/local/bin/opa
+
+      - name: Run OPA unit tests
+        run: opa test policy/
+
+      - name: Find changed template files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files: templates/**.json
+
+      - name: Evaluate changed templates against policy
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          set -e # Exit immediately if a command exits with a non-zero status.
+
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            echo "---"
+            echo "Checking policy for changed template: $file"
+
+            # Construct the input for OPA by wrapping the template content
+            # with the expected action and actor context.
+            INPUT_JSON=$(cat <<EOF
+          {
+            "input": {
+              "action": "register_template",
+              "actor": {
+                "principal_id": "service:ci-runner-v2",
+                "roles": ["template_author"]
+              },
+              "template": $(cat "$file")
+            }
+          }
+          EOF
+          )
+
+            # Evaluate the 'allow' rule
+            ALLOW_RESULT=$(opa eval --stdin -d policy/ "data.template.authz.allow" <<< "$INPUT_JSON")
+
+            if [ "$ALLOW_RESULT" != "true" ]; then
+              echo "Policy DENIED for template: $file"
+
+              # Evaluate and print the reasons for denial
+              REASONS_RESULT=$(opa eval --stdin -d policy/ "data.template.authz.reasons" <<< "$INPUT_JSON")
+              echo "Reasons: $REASONS_RESULT"
+
+              exit 1 # Fail the workflow
+            else
+              echo "Policy PASSED for template: $file"
+            fi
+          done

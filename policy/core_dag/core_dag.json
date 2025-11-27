@@ -1,0 +1,10 @@
+{
+  "core_dag": {
+    "transitions": [
+      ["draft","review"],
+      ["review","approved"],
+      ["approved","active"],
+      ["active","decommissioned"]
+    ]
+  }
+}
