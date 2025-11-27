@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TSD_Updated.v1",
+  "type": "object",
+  "required": ["type", "schema_version", "ts", "project", "tsdid"],
+  "properties": {
+    "type": { "type": "string" },
+    "schema_version": { "type": "string", "pattern": "^v[0-9]+$" },
+    "ts": { "type": "string", "format": "date-time" },
+    "project": { "type": "string" },
+    "tsdid": { "type": "string" },
+    "artifact_paths": { "type": "array", "items": { "type": "string" } },
+    "canonical_hash": { "type": "string" },
+    "change_summary": { "type": "string" }
+  },
+  "additionalProperties": true
+}

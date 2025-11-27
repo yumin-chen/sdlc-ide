@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Policy_Violation.v1",
+  "type": "object",
+  "required": ["type", "schema_version", "ts", "policy_id", "violation_details", "actor"],
+  "properties": {
+    "type": { "type": "string" },
+    "schema_version": { "type": "string", "pattern": "^v[0-9]+$" },
+    "ts": { "type": "string", "format": "date-time" },
+    "policy_id": { "type": "string" },
+    "violation_details": { "type": "string" },
+    "actor": { "type": "string" },
+    "document_id": { "type": "string" }
+  },
+  "additionalProperties": true
+}

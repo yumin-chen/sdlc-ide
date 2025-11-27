@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Artifact_Vectorized.v1",
+  "type": "object",
+  "required": ["type", "schema_version", "ts", "artifact_id", "vector_id"],
+  "properties": {
+    "type": { "type": "string" },
+    "schema_version": { "type": "string", "pattern": "^v[0-9]+$" },
+    "ts": { "type": "string", "format": "date-time" },
+    "artifact_id": { "type": "string" },
+    "vector_id": { "type": "string" },
+    "metadata": { "type": "object" }
+  },
+  "additionalProperties": true
+}

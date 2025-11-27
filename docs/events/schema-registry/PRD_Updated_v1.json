@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PRD_Updated.v1",
+  "type": "object",
+  "required": ["type", "schema_version", "ts", "project", "prdid", "author"],
+  "properties": {
+    "type": { "type": "string" },
+    "schema_version": { "type": "string", "pattern": "^v[0-9]+$" },
+    "ts": { "type": "string", "format": "date-time" },
+    "project": { "type": "string" },
+    "prdid": { "type": "string" },
+    "author": { "type": "string" },
+    "commit_hash": { "type": "string" },
+    "delta_hash": { "type": "string" },
+    "required_checks": { "type": "array", "items": { "type": "string" } },
+    "meta": { "type": "object" }
+  },
+  "additionalProperties": true
+}

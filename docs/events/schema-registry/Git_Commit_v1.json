@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Git_Commit.v1",
+  "type": "object",
+  "required": ["type", "schema_version", "ts", "commit_hash", "author", "message"],
+  "properties": {
+    "type": { "type": "string" },
+    "schema_version": { "type": "string", "pattern": "^v[0-9]+$" },
+    "ts": { "type": "string", "format": "date-time" },
+    "commit_hash": { "type": "string" },
+    "author": { "type": "string" },
+    "message": { "type": "string" },
+    "files_changed": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": true
+}

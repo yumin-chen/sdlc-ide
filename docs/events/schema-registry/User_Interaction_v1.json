@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "User_Interaction.v1",
+  "type": "object",
+  "required": ["type", "schema_version", "ts", "user", "action", "document_id"],
+  "properties": {
+    "type": { "type": "string" },
+    "schema_version": { "type": "string", "pattern": "^v[0-9]+$" },
+    "ts": { "type": "string", "format": "date-time" },
+    "user": { "type": "string" },
+    "action": { "type": "string", "enum": ["view", "edit", "comment"] },
+    "document_id": { "type": "string" },
+    "metadata": { "type": "object" }
+  },
+  "additionalProperties": true
+}

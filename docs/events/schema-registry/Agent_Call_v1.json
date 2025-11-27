@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Agent_Call.v1",
+  "type": "object",
+  "required": ["type", "schema_version", "ts", "from", "to", "action", "call_trace", "status"],
+  "properties": {
+    "type": { "type": "string" },
+    "schema_version": { "type": "string", "pattern": "^v[0-9]+$" },
+    "ts": { "type": "string", "format": "date-time" },
+    "from": { "type": "string" },
+    "to": { "type": "string" },
+    "action": { "type": "string" },
+    "call_trace": { "type": "string" },
+    "status": { "type": "string", "enum": ["enqueued", "success", "failed"] }
+  },
+  "additionalProperties": true
+}
