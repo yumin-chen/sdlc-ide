@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://your-org.com/events/User_Interaction_v1.json",
+  "title": "User_Interaction.v1",
+  "description": "Event emitted when a user interacts with a document.",
+  "allOf": [
+    { "$ref": "https://your-org.com/events/common/EventEnvelope_v1.json" },
+    {
+      "type": "object",
+      "properties": {
+        "type": { "const": "User_Interaction" },
+        "schemaVersion": { "const": "v1" },
+        "user": { "type": "string", "description": "User performing the action" },
+        "action": { "type": "string", "enum": ["view", "edit", "comment"], "description": "Action performed by the user" },
+        "documentId": { "type": "string", "description": "Document identifier" }
+      },
+      "required": ["user", "action", "documentId"],
+      "additionalProperties": false
+    }
+  ],
+  "examples": [
+    {
+      "type": "User_Interaction",
+      "schemaVersion": "v1",
+      "ts": "2025-11-27T10:30:00Z",
+      "eventId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+      "user": "yumin731598",
+      "action": "view",
+      "documentId": "PRD-042"
+    }
+  ]
+}

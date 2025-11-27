@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://your-org.com/events/Policy_Violation_v1.json",
+  "title": "Policy_Violation.v1",
+  "description": "Event emitted when a policy violation occurs.",
+  "allOf": [
+    { "$ref": "https://your-org.com/events/common/EventEnvelope_v1.json" },
+    {
+      "type": "object",
+      "properties": {
+        "type": { "const": "Policy_Violation" },
+        "schemaVersion": { "const": "v1" },
+        "policyId": { "type": "string", "description": "Policy identifier" },
+        "violationDetails": { "type": "string", "description": "Details of the violation" },
+        "actor": { "type": "string", "description": "Actor responsible for the violation" },
+        "documentId": { "type": "string", "description": "Document identifier" }
+      },
+      "required": ["policyId", "violationDetails", "actor"],
+      "additionalProperties": false
+    }
+  ],
+  "examples": [
+    {
+      "type": "Policy_Violation",
+      "schemaVersion": "v1",
+      "ts": "2025-11-27T10:30:00Z",
+      "eventId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+      "policyId": "policy-001",
+      "violationDetails": "Unauthorized access attempt to PRD-007",
+      "actor": "user-123",
+      "documentId": "PRD-007"
+    }
+  ]
+}

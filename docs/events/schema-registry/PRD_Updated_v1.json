@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://your-org.com/events/PRD_Updated_v1.json",
+  "title": "PRD_Updated.v1",
+  "description": "Event emitted when a Product Requirement Document (PRD) is updated.",
+  "allOf": [
+    {
+      "$ref": "https://your-org.com/events/common/EventEnvelope_v1.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "PRD_Updated"
+        },
+        "schemaVersion": {
+          "const": "v1"
+        },
+        "project": {
+          "type": "string",
+          "description": "Project identifier"
+        },
+        "prdId": {
+          "type": "string",
+          "description": "Product Requirements Document identifier"
+        },
+        "author": {
+          "type": "string",
+          "description": "Author of the update"
+        },
+        "commitHash": {
+          "type": "string",
+          "description": "Commit hash for the update"
+        },
+        "deltaHash": {
+          "type": "string",
+          "description": "Hash representing the changes made"
+        },
+        "requiredChecks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of required checks"
+        }
+      },
+      "required": [
+        "project",
+        "prdId",
+        "author"
+      ],
+      "additionalProperties": false
+    }
+  ],
+  "examples": [
+    {
+      "type": "PRD_Updated",
+      "schemaVersion": "v1",
+      "ts": "2025-11-27T10:30:00Z",
+      "eventId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+      "project": "project-phi",
+      "prdId": "PRD-042",
+      "author": "yumin731598",
+      "commitHash": "a1c9f...",
+      "deltaHash": "d3f9e...",
+      "requiredChecks": [
+        "tsd_sync"
+      ],
+      "metadata": {
+        "visibility": "internal",
+        "sensitivity": "low"
+      }
+    }
+  ]
+}

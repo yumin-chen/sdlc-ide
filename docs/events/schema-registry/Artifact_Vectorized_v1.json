@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://your-org.com/events/Artifact_Vectorized_v1.json",
+  "title": "Artifact_Vectorized.v1",
+  "description": "Event emitted when an artifact is vectorized.",
+  "allOf": [
+    { "$ref": "https://your-org.com/events/common/EventEnvelope_v1.json" },
+    {
+      "type": "object",
+      "properties": {
+        "type": { "const": "Artifact_Vectorized" },
+        "schemaVersion": { "const": "v1" },
+        "artifactId": { "type": "string", "description": "Artifact identifier" },
+        "vectorId": { "type": "string", "description": "Vector identifier" }
+      },
+      "required": ["artifactId", "vectorId"],
+      "additionalProperties": false
+    }
+  ],
+  "examples": [
+    {
+      "type": "Artifact_Vectorized",
+      "schemaVersion": "v1",
+      "ts": "2025-11-27T10:30:00Z",
+      "eventId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+      "artifactId": "openapi/...#endpoint/authorize",
+      "vectorId": "vec-9876",
+      "metadata": { "component": "payments", "commit": "a1c9f..." }
+    }
+  ]
+}

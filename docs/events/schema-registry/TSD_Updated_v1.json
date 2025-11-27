@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://your-org.com/events/TSD_Updated_v1.json",
+  "title": "TSD_Updated.v1",
+  "description": "Event emitted when a Technical Specification Document (TSD) is updated.",
+  "allOf": [
+    { "$ref": "https://your-org.com/events/common/EventEnvelope_v1.json" },
+    {
+      "type": "object",
+      "properties": {
+        "type": { "const": "TSD_Updated" },
+        "schemaVersion": { "const": "v1" },
+        "tsdId": { "type": "string", "description": "Technical Specification Document identifier" },
+        "artifactPaths": { "type": "array", "items": { "type": "string" }, "description": "Paths to the artifacts" },
+        "canonicalHash": { "type": "string", "description": "Canonical hash of the document" },
+        "changeSummary": { "type": "string", "description": "Summary of changes made" }
+      },
+      "required": ["tsdId"],
+      "additionalProperties": false
+    }
+  ],
+  "examples": [
+    {
+      "type": "TSD_Updated",
+      "schemaVersion": "v1",
+      "ts": "2025-11-27T10:30:00Z",
+      "eventId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+      "tsdId": "TSD-042",
+      "artifactPaths": ["openapi/v1/payments.json"],
+      "canonicalHash": "...",
+      "changeSummary": "added endpoint /authorize"
+    }
+  ]
+}
