@@ -94,7 +94,7 @@ The engine's design is based on a set of core principles that ensure determinist
 *   **NFA Instance Branching**: To handle greedy or repeating patterns (e.g., `oneOrMore()`), the engine internally tracks all possible partial matches simultaneously. This allows it to generate all valid overlapping matches but requires careful memory management.
 *   **Event-Time Timers**: To enforce temporal constraints (e.g., `within(...)`), each partial match schedules an event-time timer. If the pattern does not complete before the watermark passes the timer, the corresponding instance is automatically evicted.
 *   **Watermark-Driven Processing**: The watermark acts as the engine's "commit point." A temporal buffer holds out-of-order events, and the engine only releases them to the NFA logic when the watermark has passed their timestamp. This ensures the NFA *never* sees out-of-order events.
-*   **Late-Event Handling**: A configurable `allowedLateness` period allows the engine to process events that arrive after the watermark has passed. This may trigger retractions or corrections to previously emitted matches, trading higher correctness for increased computational cost.
+*   **Late-Event Handling**: A configurable `allowedLateness` period allows the engine to process events that arrive after the watermark has passed. This may trigger retractions or corrections to previously emitted matches. Events that arrive after this `allowedLateness` window are considered "too late" and will be sent to a Dead Letter Queue (DLQ) for archival and analysis, and will not be processed by the NFA.
 *   **Consumption Policies**: Policies like `SKIP_TO_NEXT` and `SKIP_PAST_LAST_EVENT` control how the engine prunes or retains partial matches after a full match is found, which is critical for managing state and defining whether overlapping matches are desired.
 
 ### 2. Key Tuning Knobs in Production
@@ -115,3 +115,31 @@ When implementing or tuning a CEP system, the most important configurable parame
 *   **Increased Complexity**: The implementation and tuning of the CEP engine is significantly more complex than a simple event processor.
 *   **Latency**: The watermark delay and temporal buffering introduce inherent latency.
 *   **Memory Usage**: The temporal buffer and the storage of NFA instances consume memory.
+
+## Non-Functional Requirements
+*   **Throughput Target**: The engine should be able to process at least 10,000 events/second per core.
+*   **Max Evaluation Latency**: 99th percentile latency for pattern evaluation should be less than 10 milliseconds.
+*   **Max Allowed Out-of-Order Lateness**: The system will be configured with a default of 30 seconds for out-of-order lateness.
+*   **Memory Ceiling Per NFA Instance**: Each NFA instance should consume no more than 10 KB of memory.
+
+## Operational Model and Observability
+*   **Metrics**: The engine must export metrics for the following:
+    *   Active NFA instance count.
+    *   Memory usage per key/pattern.
+    *   Temporal buffer size (pressure).
+    *   NFA expiration count (timeouts).
+    *   Count of "late" vs "too late" events.
+*   **Logging**: The engine should log at a WARN level when a "too late" event is discarded.
+*   **Overload Behavior**: If the engine experiences sustained overload (e.g., memory pressure exceeding a threshold), it will favor correctness by applying backpressure to the event source rather than dropping events.
+
+## Testing Strategy
+*   **Unit Tests**: Deterministic unit tests for in-order delivery.
+*   **Integration Tests**: Out-of-order scenarios with lateness windows.
+*   **Performance Tests**: Watermark progression tests.
+*   **Load Tests**: High-frequency event load testing.
+*   **Chaos Tests**: State eviction and recovery tests.
+
+## Versioning and Backward Compatibility
+*   **Pattern Versioning**: All CEP patterns will be versioned.
+*   **Backward Compatibility**: The engine will support running multiple versions of a pattern concurrently to ensure backward compatibility.
+*   **Replayability**: The engine will support replaying events from a specific timestamp to allow for backfilling and testing of new or updated patterns.
