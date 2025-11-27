@@ -1,0 +1,47 @@
+name: Governance Policy Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+jobs:
+  opa-policy-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup OPA
+        uses: open-policy-agent/setup-opa@v2
+        with:
+          version: latest
+
+      - name: Run OPA Policy Check
+        run: |
+          # Create a simple input.json representing the PR context
+          # In a real scenario, you might use a script to generate this from the GitHub Event payload
+          
+          echo '{
+            "event_type": "pull_request",
+            "action": "closed", 
+            "pull_request": {
+              "merged": false
+            },
+            "changed_files": [] 
+          }' > input.json
+          
+          # Note: This is a simplified check. 
+          # For a real check, we need to feed the actual changed files and PR status.
+          # Here we are just validating the policy syntax and running a dummy eval.
+          
+          opa eval --input input.json --data docs/governance/policies/adr_policy.rego "data.sdlc.governance.allow"
+
+      - name: Install Conftest
+        uses: open-policy-agent/conftest-action@v1
+        with:
+          policy: docs/governance/policies
+          
+      - name: Run Conftest
+        # Conftest is often easier for CI as it handles file inputs automatically
+        run: |
+          conftest test docs/adr/ --policy docs/governance/policies/adr_policy.rego --namespace sdlc.governance
