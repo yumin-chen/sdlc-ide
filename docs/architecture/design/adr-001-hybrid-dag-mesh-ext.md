@@ -87,3 +87,17 @@ Proposals undergo a mandatory 2-stage validation:
 
 ### Registration
 Validated proposals are autonomously registered in the **Mesh Registry**, making new types available at runtime without human intervention. The Core DAG remains untouched.
+
+### Diagram of the Proposal Pipeline
+```mermaid
+graph TD
+    A[Autonomous Agents<br/>(Discovery & Proposal Gen)] --> B(Mesh Extension Spec);
+    B --> C{Validation};
+    C --> D[ORCHESTRATOR<br/>Structural Rules];
+    C --> E[GOVERNOR<br/>Policy + ACLs];
+    D --> F{Result};
+    E --> F;
+    F -- Pass --> G[MESH REGISTRY<br/>(Dynamic Types)];
+    G --> H(Runtime Mesh Layer);
+    F -- Fail --> I([Proposal Rejected]);
+```
