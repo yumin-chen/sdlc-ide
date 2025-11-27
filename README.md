@@ -1,29 +1,44 @@
-# SDLC_IDE: A Multi-Agent System for Software Development Lifecycle Management
+# SDLC_IDE: Multi-Agent System for Software Development Lifecycle Management
 
-## Table of Contents
+A governance-first, extensible multi-agent framework for managing software development artifacts and workflows. SDLC_IDE combines deterministic core processes with flexible, user-defined extensions to balance compliance rigor and operational agility.
 
-1.  [Overview](#1-overview)
-2.  [Architecture (Revised for Terminology Clarity)](#2-architecture-revised-for-terminology-clarity)
-3.  [Key Principles](#3-key-principles)
-4.  [Governance (Revised for Policy Detail)](#4-governance-revised-for-policy-detail)
-    *   [Architecture Decision Records (ADRs)](#architecture-decision-records-adrs)
-    *   [OPA Policy](#opa-policy)
-5.  [Getting Started](#5-getting-started)
-6.  [Contributing](#6-contributing)
+## Quick Start
 
-## 1. Overview
+### Prerequisites
 
-SDLC_IDE is a multi-agent system designed to manage all document artifacts throughout the software development lifecycle. It provides a robust and flexible framework for defining, managing, and governing the relationships between different documents, ensuring a deterministic and auditable development process.
+- Go 1.21+
+- Docker & Docker Compose
+- Open Policy Agent (OPA)
+- Conftest
+- Helm 3.0+
+
+### Installation
+
+```bash
+# Clone repository
+git clone https://github.com/your-org/sdlc-ide.git
+cd sdlc-ide
 
 The system is built on a **Hybrid Directed Graph Architecture** that combines a strict, core workflow with flexible, user-defined extensions. This allows for both strong governance and adaptability, making it suitable for a wide range of development methodologies.
+# Install OPA and Conftest
+curl https://openpolicyagent.org/downloads/latest/opa_linux_x86_64 -o opa
+chmod +x ./opa
 
 ## 2. Architecture (Revised for Terminology Clarity)
+curl -L https://github.com/open-policy-agent/conftest/releases/download/v0.46.0/conftest_0.46.0_Linux_x86_64.tar.gz -o conftest.tar.gz
+tar xf conftest.tar.gz
 
 The architecture of SDLC_IDE is composed of three main components:
+# Verify governance policies locally
+./conftest test docs/architecture/design/ \
+  --policy docs/governance/policies/adr_policy.rego \
+  --namespace sdlc.governance
 
   * **Core Directed Acyclic Graph (DAG):** Defines the strict, deterministic workflow for core SDLC documents, ensuring they follow a predefined lifecycle. This graph manages the transition between primary artifacts like the **Product Requirements Document (PRD)**, **Technical Specification Document (TSD)**, and **Architecture Decision Records (ADRs)**.
   * **Selective Mesh Extension Layer:** Allows for the integration of user-defined document types and relationships, providing flexibility and extensibility (e.g., Compliance Policies, API Specifications).
   * **Event-Based Observer Layer:** Captures and analyzes all status and relationship events throughout the system. This layer provides crucial **insights and enables AI-driven assistance**, such as proactively suggesting relevant API specs when a TSD is being drafted, or flagging potential compliance violations.
+# Run tests
+go test -v ./...
 
 ```mermaid
 graph TD
@@ -33,124 +48,420 @@ graph TD
         TSD -->|Triggers| ADR[ADR Manager]
         ADR -->|Archives To| KB[KB Manager]
     end
-
-    subgraph Mesh ["Mesh Extensions (Flexible)"]
-        direction TB
-        Comp[Compliance Module]
-        API[API Spec]
-        Perf[Performance Model]
-    end
-
-    subgraph Gov ["Governance & Observation"]
-        Orch[Orchestrator]
-        Events[Event Layer]
-    end
-
-    %% Mesh relationships
-    TSD -.->|References| API
-    TSD -.->|References| Perf
-    PRD -.->|Validates against| Comp
-
-    %% Orchestrator Control
-    Orch -.-|Governs| PRD
-    Orch -.-|Governs| TSD
-    Orch -.-|Governs| ADR
-    Orch -.-|Governs| KB
-    Orch -.-|Validates ACL| Comp
-
-    %% Event Layer
-    PRD -.-|Emits Events| Events
-    TSD -.-|Emits Events| Events
-    ADR -.-|Emits Events| Events
-    KB -.-|Emits Events| Events
-    Comp -.-|Emits Events| Events
+# Build and run locally
+docker-compose up -d
 ```
 
-## 3. Key Principles
+## Architecture Overview
 
-The SDLC_IDE project is guided by a set of key architectural principles that ensure a clear separation of concerns and a robust, scalable system.
+SDLC_IDE is built on three integrated layers:
 
-*   **Human-Governed Core:** The Core DAG is considered immutable to autonomous agents. Any modifications to the core flow require explicit human approval via the Architecture Decision Record (ADR) governance process. This ensures that the primary SDLC lifecycle remains stable and predictable.
-*   **Agent-Driven Extensibility:** The Mesh Extension Layer is designed for dynamic, autonomous extensions. Agents can propose and manage their own document types and relationships within this layer, allowing for flexible and adaptable workflows.
-*   **Single Source of Authority (SSoA):** The Core DAG serves as the single source of truth for the SDLC lifecycle. The Mesh can enrich and extend the core, but it can never override its fundamental structure. This ensures a clear and consistent understanding of the development process.
-*   **Separation of Concerns:** The architecture enforces a strict separation between the Core DAG and the Mesh extensions. This allows for independent development and evolution of each component, reducing the risk of unintended side effects.
+### 1. Core Directed Acyclic Graph (DAG)
 
-## 4. Governance (Revised for Policy Detail)
+The immutable backbone of the SDLC workflow:
 
-The SDLC_IDE project uses a governance model based on the **Open Policy Agent (OPA)** to enforce architectural constraints and ensure that all changes to the system are made in a controlled and deliberate manner.
+```
+PRD → TSD → ADR → KB
+```
+
+**Document Types:**
+- **PRD** — Product Requirements Document
+- **TSD** — Technical Specification Document
+- **ADR** — Architecture Decision Record
+- **KB** — Knowledge Base Archive
+
+**Properties:**
+- Deterministic, rule-enforced transitions
+- Orchestrator-governed state changes
+- Fully auditable lifecycle events
+- No autonomous agent modifications without formal approval
+
+### 2. Selective Mesh Extension Layer
+
+Flexible, user-defined document types and relationships that extend (but never override) the Core DAG.
+
+**Supported Extensions:**
+- API Specifications
+- Compliance Documents
+- Performance Models
+- Custom Project Artifacts
+
+**Constraints:**
+- Declarative schemas with allowed edges
+- Local communication within Mesh clusters
+- Semantic (embedding-based) links enabled
+- All changes validated by Orchestrator + Governor
+
+### 3. Event-Based Observer Layer
+
+Immutable event stream capturing all lifecycle and communication activity.
+
+**Capabilities:**
+- Emit structured lifecycle events
+- Enable ML-driven insights and recommendations
+- Provide analytics for compliance and performance
+- Do not directly influence Core DAG structure
+
+## Key Principles
+
+### Human-Governed Core
+The Core DAG remains immutable to autonomous agents. All modifications require formal Architecture Decision Record (ADR) approval through the PR workflow.
+
+### Agent-Driven Extensibility
+Agents propose new Mesh document types and relationships. All proposals are validated against governance policies and approved by the Orchestrator before deployment.
+
+### Single Source of Authority (SSoA)
+The Core DAG is the canonical SDLC definition. Mesh extensions enrich semantic understanding but never override lifecycle rules.
+
+### Strong Separation of Concerns
+Core and Mesh evolve independently with strict boundary enforcement, minimizing systemic risk and enabling safe experimentation.
+
+## Governance & Compliance
 
 ### Architecture Decision Records (ADRs)
 
-All significant architectural decisions are documented in **Architecture Decision Records (ADRs)**, which are stored in the `docs/architecture/design` directory. ADRs follow a strict naming convention to ensure consistency: `adr-XXX-kebab-case-description.md`, where `XXX` is the ADR number starting from 000.
+All architectural decisions are formally documented and version-controlled.
 
-ADRs are subject to a strict approval process, enforced by an OPA policy, which requires that they be submitted via a pull request and reviewed by the project maintainers.
+**Location:** `docs/architecture/design/`
 
-### OPA Policy
-
-The OPA policy, defined in `docs/governance/policies/adr_policy.rego`, ensures strict adherence to governance principles. The policy enforces rules such as:
-
-  * All ADR file changes must originate from a pull request.
-  * The ADR number (`XXX`) must be unique and strictly sequential within the directory.
-  * The title of the ADR must adhere to defined formatting constraints.
-
-This rigorous checking allows for a thorough review and discussion of all proposed changes, ensuring they are in line with the project's architectural principles.
-
-## 5. Getting Started
-
-This section will guide you through the process of setting up your local environment and running the project's governance checks.
-
-### Prerequisites
-
-Before you begin, you will need to have the following tools installed:
-
-*   **Open Policy Agent (OPA):** A lightweight, general-purpose policy engine. You can download it from the [official OPA website](https://www.openpolicyagent.org/docs/latest/#running-opa).
-*   **Conftest:** A utility that helps you write tests against structured configuration data. You can install it by following the instructions in the [Conftest documentation](https://www.conftest.dev/install/).
-
-### Installation
-
-1.  **Install OPA:**
-
-    Follow the installation instructions on the [OPA website](https://www.openpolicyagent.org/docs/latest/#running-opa) to download and install the OPA binary for your operating system.
-
-2.  **Install Conftest:**
-
-    Follow the installation instructions in the [Conftest documentation](https://www.conftest.dev/install/) to install Conftest on your system.
-
-### Running the Governance Checks
-
-Once you have installed OPA and Conftest, you can run the governance checks locally to ensure that all ADRs comply with the project's policies.
-
-The following command will execute the OPA policy against all ADRs in the `docs/adr` directory:
-
-```bash
-conftest test docs/architecture/design/ --policy docs/governance/policies/adr_policy.rego --namespace sdlc.governance
+**Naming Convention:**
+```
+adr-XXX-kebab-case-description.md
 ```
 
-If all the checks pass, you will see a confirmation message in your terminal. If any of the checks fail, you will see a detailed report of the violations.
+Where `XXX` is a strictly sequential number (000, 001, 002, etc.).
 
-## 6. Contributing
+**Submission Process:**
+1. Create ADR file using template: `docs/architecture/templates/adr-template.md`
+2. Include rationale, alternatives, and expected impact
+3. Submit via Pull Request (direct commits disallowed)
+4. Governance policies automatically validate numbering and formatting
+5. Merge only after approval
 
-We welcome contributions to the SDLC_IDE project. Whether you're interested in fixing bugs, adding new features, or improving the documentation, your help is greatly appreciated.
+**Example ADRs:**
+- `adr-000-hybrid-dag-mesh-architecture.md` — Core architecture
+- `adr-001-orchestrator-governance-model.md` — Agent authorization
+- `adr-002-event-sourcing-strategy.md` — Audit logging
 
-To ensure a smooth and collaborative process, please follow these guidelines:
+### Open Policy Agent (OPA)
 
-### Submitting an ADR
+Governance policies are enforced programmatically using OPA.
 
-For any significant architectural changes, you must submit an Architecture Decision Record (ADR) before you start writing any code. This allows the project maintainers to review your proposal and provide feedback before you invest a significant amount of time in implementation.
+**Policy Location:** `docs/governance/policies/adr_policy.rego`
 
-When submitting an ADR, please:
+**Enforced Constraints:**
+- ADR changes must originate from Pull Requests
+- ADR numbering must be sequential without gaps
+- Title formatting must follow project conventions
+- Mesh extensions cannot override Core DAG transitions
+- All document schemas validated against allowed_edges
 
-*   Follow the naming convention: `adr-XXX-kebab-case-description.md`.
-*   Use the ADR template in `docs/architecture/templates/adr-template.md`.
-*   Clearly describe the proposed changes and the problem they are intended to solve.
-*   Submit the ADR as a pull request to the `main` branch.
+**Run Policy Checks:**
+```bash
+conftest test docs/architecture/design/ \
+  --policy docs/governance/policies/adr_policy.rego \
+  --namespace sdlc.governance
+```
 
-### Submitting a Pull Request
+## Contributing
 
-For all code contributions, please submit a pull request with the following:
+### Proposing Architectural Changes
 
-*   A clear and concise title and description of the changes.
-*   A link to the relevant ADR, if applicable.
-*   A summary of the tests you have added or updated.
+1. **Open an issue** describing the change and its rationale
+2. **Create an ADR** using the template
+3. **Submit a PR** linking the issue and ADR
+4. **Wait for governance validation** (OPA checks run automatically)
+5. **Address feedback** from reviewers
+6. **Merge** once approved
 
-By following these guidelines, you can help us to ensure that the SDLC_IDE project remains a robust and reliable platform for managing the software development lifecycle. We look forward to your contributions!
+**Checklist:**
+- [ ] ADR follows naming convention: `adr-XXX-kebab-case-description.md`
+- [ ] ADR uses approved template from `docs/architecture/templates/adr-template.md`
+- [ ] Rationale section explains the "why"
+- [ ] Alternatives section covers rejected approaches
+- [ ] Impact section identifies affected systems
+- [ ] OPA policy checks pass locally
+- [ ] PR description links to related issue
+
+### Submitting Code Changes
+
+All code changes should reference related ADRs.
+
+**PR Template:**
+```
+## Description
+Brief summary of changes
+
+## Related ADR
+Refs #adr-XXX
+
+## Type of Change
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Breaking change
+
+## Testing
+- [ ] Unit tests added/updated
+- [ ] Integration tests pass
+- [ ] Governance checks pass
+
+## Checklist
+- [ ] Code follows project style guide
+- [ ] Self-review completed
+- [ ] Tests provide adequate coverage
+```
+
+### Running Tests Locally
+
+```bash
+# Unit tests
+go test -v -coverprofile=coverage.out ./...
+go tool cover -func coverage.out
+
+# Integration tests
+docker-compose -f docker-compose.test.yml up --abort-on-container-exit
+
+# Governance compliance
+conftest test docs/architecture/design/ \
+  --policy docs/governance/policies/adr_policy.rego \
+  --namespace sdlc.governance
+
+# Code quality
+golangci-lint run ./...
+```
+
+## Repository Structure
+
+```
+sdlc-ide/
+├── docs/
+│   ├── architecture/
+│   │   ├── design/
+│   │   │   ├── adr-000-hybrid-dag-mesh-architecture.md
+│   │   │   ├── adr-001-orchestrator-governance-model.md
+│   │   │   └── ... (sequential ADRs)
+│   │   └── templates/
+│   │       └── adr-template.md
+│   └── governance/
+│       └── policies/
+│           └── adr_policy.rego
+├── pkg/
+│   ├── orchestrator/      # Core orchestration logic
+│   ├── managers/          # DAG document managers
+│   ├── mesh/              # Extension layer implementations
+│   ├── events/            # Event stream & observers
+│   └── models/            # Data structures
+├── agents/
+│   ├── proposal_agent/    # ADR & Mesh proposal generation
+│   ├── compliance_agent/  # Policy validation
+│   └── insight_agent/     # Analytics & recommendations
+├── orchestrator/
+│   ├── main.go
+│   ├── config.yaml
+│   └── handlers/
+├── scripts/
+│   └── validate_schemas.py
+├── helm/
+│   ├── values.yaml
+│   ├── values-staging.yaml
+│   └── values-production.yaml
+├── docker-compose.yml
+├── docker-compose.test.yml
+├── Dockerfile
+├── cicd.yml               # CI/CD pipeline configuration
+└── README.md
+```
+
+## Practical Examples
+
+### Example 1: Creating a PRD → TSD Workflow
+
+```bash
+# 1. Create PRD document
+cat > docs/sdlc/prd-001.md << EOF
+# PRD: User Authentication
+
+## Overview
+Implement OAuth2-based authentication...
+
+## Requirements
+- Support multiple identity providers
+- Maintain session state
+- Enable SSO capabilities
+EOF
+
+# 2. Orchestrator detects new PRD and registers it
+# (Automatic via event watcher)
+
+# 3. Create corresponding TSD
+cat > docs/sdlc/tsd-001.md << EOF
+# TSD: Auth Service Implementation
+
+## Overview
+Technical implementation of PRD-001...
+
+## Architecture
+- OAuth2 provider integration
+- Session management strategy
+- API specifications in /specs/auth-api.yaml
+
+## References
+- PRD: prd-001.md
+EOF
+
+# 4. Orchestrator automatically links TSD to PRD in Core DAG
+# State transitions: PRD (active) → TSD (in_progress)
+```
+
+### Example 2: Defining a Mesh Extension
+
+```yaml
+# mesh/extensions/compliance-report.yaml
+name: Compliance Report
+version: "1.0"
+
+schema:
+  properties:
+    author:
+      type: string
+      description: "Report author"
+    date:
+      type: string
+      format: "YYYY-MM-DD"
+    report_content:
+      type: string
+    compliance_level:
+      type: string
+      enum: [full, partial, non_compliant]
+
+allowed_edges:
+  - type: references
+    target: TSD
+    description: "Links to technical specifications"
+  - type: references
+    target: ADR
+    description: "References architectural decisions"
+
+validation_rules:
+  - author_required: true
+  - date_in_past: true
+  - report_length_min: 100
+```
+
+### Example 3: Event Emission & Subscription
+
+```json
+{
+  "event_id": "evt-20240115-001",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "event_type": "compliance_violation",
+  "source": "compliance_agent",
+  "document_id": "tsd-001",
+  "document_type": "TSD",
+  "message": "TSD-001 does not comply with security policy ADR-003",
+  "severity": "high",
+  "recommended_action": "Update TSD-001 to align with ADR-003 before progression to ADR stage",
+  "related_adr": "adr-003-security-requirements",
+  "tags": ["security", "compliance", "requires_review"]
+}
+```
+
+## Deployment
+
+### Local Development
+
+```bash
+docker-compose up -d
+# Services: orchestrator, event-store, policy-engine
+```
+
+### Staging Environment
+
+```bash
+helm repo add sdlc-ide https://charts.example.com/sdlc-ide
+helm install sdlc-ide sdlc-ide/sdlc-ide \
+  --namespace staging \
+  --values helm/values-staging.yaml
+```
+
+### Production Deployment
+
+```bash
+helm upgrade --install sdlc-ide sdlc-ide/sdlc-ide \
+  --namespace production \
+  --values helm/values-production.yaml \
+  --wait
+```
+
+## API Reference
+
+### Core Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/documents` | GET | List all documents in Core DAG |
+| `/api/v1/documents/{id}` | GET | Retrieve document details |
+| `/api/v1/documents` | POST | Create new document (PRD) |
+| `/api/v1/transitions/{id}` | POST | Request state transition (ADR-gated) |
+| `/api/v1/mesh/extensions` | GET | List all Mesh extensions |
+| `/api/v1/events` | GET | Stream lifecycle events |
+| `/api/v1/governance/validate` | POST | Validate document against policies |
+
+## Monitoring & Observability
+
+### Key Metrics
+
+- `sdlc_document_lifecycle_duration` — Time from PRD to KB
+- `sdlc_orchestrator_latency` — Orchestrator decision latency
+- `sdlc_policy_violations` — Count of governance violations
+- `sdlc_agent_proposals_pending` — Queued Mesh proposals
+
+### Logging
+
+All lifecycle events are logged to centralized event store with full audit trails.
+
+```bash
+# Query recent compliance violations
+curl http://localhost:8080/api/v1/events?type=compliance_violation&limit=100
+```
+
+## Troubleshooting
+
+### ADR Policy Validation Fails
+
+```bash
+# Check policy syntax
+conftest test docs/architecture/design/ \
+  --policy docs/governance/policies/adr_policy.rego \
+  --namespace sdlc.governance \
+  --verbose
+```
+
+### Orchestrator Not Recognizing New Documents
+
+1. Verify document schema matches `allowed_edges`
+2. Check Orchestrator logs: `docker logs sdlc-orchestrator`
+3. Ensure document is in correct directory: `docs/sdlc/`
+
+### Mesh Extension Rejected by Governor
+
+Review the governance policy output:
+```bash
+conftest test mesh/extensions/ \
+  --policy docs/governance/policies/mesh_policy.rego
+```
+
+## Support & Community
+
+- **Issues**: [GitHub Issues](https://github.com/your-org/sdlc-ide/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-org/sdlc-ide/discussions)
+- **Documentation**: See `/docs` directory
+- **Slack**: `#sdlc-ide` channel
+
+## License
+
+This project is licensed under the MIT License. See `LICENSE` file for details.
+
+## Contributing Guidelines
+
+See `CONTRIBUTING.md` for detailed contribution guidelines, code style, and development workflow.
