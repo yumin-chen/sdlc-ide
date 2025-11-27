@@ -72,6 +72,36 @@ flowchart TD
     class PRD_M,TSD_M,ADR_M,KB_M mesh;
 ```
 
+```mermaid
+%% Compact Hybrid Directed Graph: Core DAG + Selective Mesh
+flowchart TD
+    %% Core DAG nodes
+    PRD[PRD: Product Requirements Document]
+    TSD[TSD: Technical Specification Document]
+    ADR[ADR: Architectural Decision Record]
+    KB[KB: Knowledge Base / Reference Docs]
+
+    %% Core DAG flow
+    PRD --> TSD
+    TSD --> ADR
+    ADR --> KB
+
+    %% Mesh extensions as dashed connections
+    PRD --- ADR
+    PRD --- TSD
+    TSD --- KB
+    TSD --- ADR
+    ADR --- KB
+    KB --- PRD
+
+    %% Styling
+    classDef core fill:#f9f,stroke:#333,stroke-width:2px,color:#000;
+    classDef mesh fill:none,stroke:#1f77b4,stroke-width:1px,color:#000,stroke-dasharray: 5 5;
+
+    class PRD,TSD,ADR,KB core;
+    linkStyle 4,5,6,7,8,9 stroke-dasharray: 5 5,stroke:#1f77b4,stroke-width:1px;
+```
+
 ### ✅ Features Captured
 
 1. **Core DAG**: Linear flow from PRD → TSD → ADR → KB (enforces lifecycle).
