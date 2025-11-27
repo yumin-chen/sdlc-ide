@@ -103,12 +103,12 @@ The Core DAG represents the authoritative SDLC lifecycle.
 Supports arbitrary, user‑defined document types and multi‑directional semantic relations.
 
 **Mesh characteristics:**
-- Nodes declare allowed inbound/outbound edges (declarative ACL)
-- Orchestrator validates all mesh edges
-- Extensions cannot modify or override the Core DAG
-- Extensions cannot become upstream inputs to Core nodes
-- **Core → Extension links are allowed**
-- **Extension → Core links are only allowed** as non-structural declarative metadata, never as dependencies
+- Nodes declare allowed inbound/outbound edges (declarative ACL).
+- Mesh edge validation rules, cycle detection, and ACL enforcement are defined in ADR-004 (Orchestrator). ADR-001 establishes only the architectural boundary.
+- Extensions cannot modify or override the Core DAG.
+- Extensions cannot become upstream inputs to Core nodes.
+- **Core → Extension links are allowed**.
+- **Extension → Core links are only allowed** as non-structural declarative metadata, never as dependencies.
 
 **Allowed Core → Extension Scenarios:**
 1. **Detail Extension**: TSD references an external API spec, data dictionary, or performance model.
@@ -118,9 +118,9 @@ Supports arbitrary, user‑defined document types and multi‑directional semant
 5. **User‑Defined Extensions**: Arbitrary new doc types defined by teams without modifying the core.
 
 **Optional mesh features:**
-- Gossip‑style coordination within approved clusters
-- Local collaboration within extension sets
-- Semantic link inference via embeddings (never structural inference)
+- Gossip‑style coordination is allowed *only* within mesh clusters and must never influence Core DAG decisions.
+- Local collaboration within extension sets.
+- Semantic link inference via embeddings (never structural inference). Structural validation comes from orchestrator + schema validation. Semantic inference comes from embeddings (see ADR-003).
 
 ### C. Event‑Based Observer Layer (Separate from Graph Structure)
 A distributed event streaming system (technology selected via ADR‑002) captures:
@@ -182,9 +182,9 @@ The Hybrid Directed Graph Architecture satisfies all operational and architectur
 - **Suitable for audits**, compliance, and impact analysis
 
 ### Negative
-- More complex than a single‑model graph
-- Mesh nodes require explicit schema + ACL definitions
-- Validation logic must prevent accidental cycles
+- More complex than a single‑model graph.
+- Mesh nodes require explicit schema and ACL definitions, as detailed in ADR-005 (Custom Document Type Integration).
+- Validation logic must prevent accidental cycles.
 
 ### Neutral / Tradeoffs
 - Extensions are powerful but must be declared upfront
