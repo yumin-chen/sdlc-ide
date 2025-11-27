@@ -44,7 +44,7 @@ The platform needs:
 ## 5. Event Layer Contract (core rules)
 - **Publish‑only by Agents:** Agents publish events describing actions they took (or were requested to take). Events MUST NOT be used as authorization to perform actions; the orchestrator is the authority.
 - **Minimize payloads:** Events should contain references (IDs, hashes, pointers) to documents and not full document bodies unless necessary and permitted by policy.
-- **Immutable & versioned schemas:** Event schemas are versioned (v1, v2, …). Producers must include schema_version.
+- **Immutable & versioned schemas:** Event schemas are versioned (v1, v2, …). Producers must include schema_version. All event schema changes must be backward-additive only (no removals). Consumers must ignore unknown fields.
 - **Namespaces & ACLs:** Topics are namespaced by project and optionally by environment (e.g., sdlc:project-phi:events). Consumers and producers are authorized by the orchestrator / IAM.
 - **Retention / Archival:** Short retention for hot streams (days-weeks); longer archival (cold storage) for compliance via sink connectors.
 - **Observability events only:** The streaming bus is observational. Commands that change system state must be passed via orchestrator-authorized agent calls; events can inform orchestrator policy but cannot bypass it.
@@ -115,8 +115,24 @@ Include additional domain events as needed (BlindSpot_Detected, Impact_Summary, 
     - `sdlc.{project}.vector` — vectorization updates
     - `sdlc.{project}.agent-calls` — observability of calls
     - `sdlc.global.policy` — orchestrator/policy events
-- **Partitioning key:** use project + artifact_id (or prdid/tsdid) for lifecycle topics to ensure ordering per artifact. For vector topic, partition by artifact_id.
+- **Partitioning key:** Use `artifact_id` as the partition key to ensure that all events for a given artifact are processed in order.
 - **Consumer groups:** analytics, KBA ingestion workers, embedding update workers, UI notification workers.
+
+### Required vs. Optional Consumers
+
+| Consumer      | Required? | Purpose            |
+|---------------|:---------:|--------------------|
+| Vectorizer    | ✅ Required | Embedding updates  |
+| KBA Indexer   | Optional  | Knowledge base     |
+| UI Notifier   | Optional  | Frontend           |
+| Analytics     | Optional  | Metrics            |
+
+### Causal Ordering and Topic Design
+
+To ensure causal ordering, the following principles will be applied:
+-   **Partitioning:** As stated above, using `artifact_id` as the partition key guarantees that all events related to a specific artifact (e.g., `PRD-042`) are delivered to a single consumer in the order they were produced.
+-   **Explicit Dependencies:** When one artifact depends on another (e.g., a TSD depends on a PRD), the orchestrator will emit an explicit `Dependency_Evaluated` event to signal the relationship.
+-   **Rollbacks:** An optional `Rollback_Requested` event type will be introduced to handle cases where a change needs to be reverted.
 
 ## 8. Retention, archival & compliance
 - **Hot retention:** 7–30 days (depends on activity) to support near-term replay and UI features.
@@ -133,8 +149,8 @@ Include additional domain events as needed (BlindSpot_Detected, Impact_Summary, 
 ## 10. Reliability, SLA & scaling
 - **Availability SLA:** 99.95% for core event delivery (adjust per infra constraints).
 - **Throughput targets and scaling:** plan for burst‑ready clusters; autoscaling for consumers (Kubernetes + consumer group scaling).
-- **Backpressure & dead-lettering:** consumers must have DLQ topics; failing events flow to DLQ with metadata for diagnostics.
-- **Ordering guarantees:** only guaranteed per partition/key. Design producers/consumers around this.
+- **Backpressure & dead-lettering:** Consumers must have DLQ topics; failing events flow to DLQ with metadata for diagnostics. The DLQ is for manual replay only (operator-driven), and a CLI command will be provided in the PoC for this purpose.
+- **Ordering guarantees:** Only guaranteed per partition/key. Design producers/consumers around this.
 
 ## 11. Replays & materialized views
 - **Replay use cases:** rebuild vector DB, recompute KB, retrain models, reconstruct a document’s history.
@@ -153,7 +169,7 @@ Include additional domain events as needed (BlindSpot_Detected, Impact_Summary, 
 
 ## 14. Governance & policy integration
 - **Event schemas** versioned and centrally stored (schema registry).
-- **Orchestrator** may subscribe to agent-calls for policy auditing; but authorization must remain enforced by orchestrator, not by listening to the stream.
+- **Orchestrator** may subscribe to events for auditing but never acts exclusively based on events. Commands must still come through DAG-authorized calls.
 - **Policy changes** must be emitted as Policy_Updated events.
 
 ## 15. Alternatives considered
