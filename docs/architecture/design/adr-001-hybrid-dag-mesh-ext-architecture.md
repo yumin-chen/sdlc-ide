@@ -72,6 +72,7 @@ Defines the authoritative SDLC lifecycle:
 *   Agents communicate only downstream.
 *   No gossip or opportunistic peer messaging.
 *   Governed by a precise Orchestrator state machine.
+*   The Orchestrator MUST reject all mutations to Core system behavior, topology, or governance rules not originating from a human-approved ADR.
 *   Full auditability and reproducibility.
 
 #### Core Agents and Flow Summary
