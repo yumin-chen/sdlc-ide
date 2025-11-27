@@ -1,0 +1,18 @@
+{
+  "exceptions": [
+    {
+      "dependency": "vendor-special-lib",
+      "ecosystem": "python",
+      "reason": "Regulatory mandate",
+      "approved_by": "Architecture Team",
+      "expires_on": "2025-12-31"
+    },
+    {
+      "dependency": "com.example:legacy-framework",
+      "ecosystem": "java",
+      "reason": "Critical time-to-market",
+      "approved_by": "Architecture Team",
+      "expires_on": "2025-12-15"
+    }
+  ]
+}
