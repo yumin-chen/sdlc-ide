@@ -202,26 +202,11 @@ OPA policies ensure governance integrity.
 
 # Contributing
 
-## Proposing Architectural Changes
+We welcome all contributions to the SDLC_IDE project. To ensure a smooth, transparent, and effective process for everyone, we have established a set of contribution guidelines.
 
-Checklist:
+Our workflow is designed to be traceable and align with standard Git practices. It covers everything from creating an issue and naming your branch to submitting a pull request.
 
-* Proper sequential ADR number
-* Kebab-case filename
-* Problem / Solution / Rationale / Alternatives / Impact sections
-* Template-based structure
-* OPA policy checks pass
-* Linked GitHub issue
-
-## Submitting Code
-
-Checklist:
-
-* PR references ADR
-* Unit and integration tests included
-* Governance checks pass
-* Code style validated via `golangci-lint`
-* Documentation updated
+For detailed information on our development process, branch naming conventions, and coding standards, please read our full **[Contributing Guide](CONTRIBUTING.md)**.
 
 ---
 
