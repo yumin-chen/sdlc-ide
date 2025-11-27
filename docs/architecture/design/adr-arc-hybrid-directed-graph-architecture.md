@@ -6,7 +6,7 @@ authors: System Architecture Team (via Yumin@Chen.Software)
 project: SDLC_IDE
 ---
 
-# ADR-001: Hybrid Directed Graph Architecture with Selective Mesh Extensions
+# ADR-ARC: Hybrid Directed Graph Architecture with Selective Mesh Extensions
 
 ## 1. Context
 SDLC_IDE requires a multi‑agent system capable of managing all document artifacts throughout the software development lifecycle. The system must support:
