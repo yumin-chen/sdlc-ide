@@ -1,0 +1,7 @@
+stages:
+  - test
+
+governance-checks:
+  stage: test
+  script:
+    - ./scripts/check-adr-filenames.sh
