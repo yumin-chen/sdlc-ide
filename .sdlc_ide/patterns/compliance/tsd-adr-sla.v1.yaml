@@ -1,0 +1,31 @@
+id: 'tsd-adr-sla-violation'
+version: '1.0.0'
+description: 'Detects when a Technical Specification Document (TSD) is updated but a corresponding Architectural Decision Record (ADR) is not updated within the 48-hour SLA.'
+author: 'SDLC_IDE Governance Team'
+tags:
+  - 'compliance'
+  - 'sla'
+  - 'governance'
+
+pattern:
+  # Correlate the TSD and ADR events by the artifact ID and component name.
+  # Assumes the event payload contains a structure like: { ..., artifact: { id: "...", component: "..." } }
+  correlateBy:
+    - '$.artifact.id'
+    - '$.artifact.component'
+
+  # The entire pattern must match within 48 hours from the first event.
+  within: '48 hours'
+
+  # Defines the sequence of events to match.
+  sequence:
+    - name: 'TsdUpdated'
+      eventType: 'TSD_Updated'
+      # This is the starting point of our pattern. No specific payload conditions needed.
+
+    - name: 'AdrNotUpdated'
+      # This is a negative condition. We expect *no* ADR_Updated event.
+      notFollowedBy:
+        eventType: 'ADR_Updated'
+        # The absence of this event is what triggers the complex event.
+        within: '48 hours'

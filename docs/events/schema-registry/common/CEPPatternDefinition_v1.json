@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CEPPatternDefinition_v1",
+  "description": "Defines the structure for a declarative Complex Event Processing (CEP) pattern used by the CEP_Agent.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "A unique identifier for the pattern (e.g., 'tsd-adr-sla-violation').",
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "version": {
+      "description": "The semantic version of this pattern definition.",
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
+    },
+    "description": {
+      "description": "A human-readable explanation of what the pattern detects.",
+      "type": "string"
+    },
+    "author": {
+      "description": "The name or team responsible for maintaining this pattern.",
+      "type": "string"
+    },
+    "tags": {
+      "description": "A list of keywords for categorizing the pattern (e.g., 'compliance', 'sla', 'quality').",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "pattern": {
+      "description": "The core logic of the pattern to be executed by the CEP engine.",
+      "type": "object",
+      "properties": {
+        "correlateBy": {
+          "description": "An array of JSONPath expressions to fields in the event payload used to correlate events in the sequence.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "within": {
+          "description": "The total time window in which the entire pattern must match. This defines the maximum lifetime of a pattern instance from the first event.",
+          "type": "string",
+          "pattern": "^(\\d+)\\s+(seconds|minutes|hours|days)$"
+        },
+        "sequence": {
+          "description": "An ordered list of event steps that define the pattern. The sequence is defined by the array order.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/eventStep"
+          }
+        }
+      },
+      "required": ["sequence", "correlateBy"]
+    }
+  },
+  "required": ["id", "version", "description", "pattern"],
+  "definitions": {
+    "eventStep": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "A logical name for this step in the pattern (e.g., 'Trigger', 'FollowUp', 'AbsenceCheck').",
+          "type": "string"
+        },
+        "eventType": {
+          "description": "The 'type' of the event to match for this step. Used for positive event matches.",
+          "type": "string"
+        },
+        "where": {
+          "description": "A condition (e.g., using a simple expression language) to filter events based on their payload. Applies to both positive and negative matches.",
+          "type": "string"
+        },
+        "notFollowedBy": {
+          "description": "A negative condition. This step asserts that no event matching these criteria occurs within a given time window after the previous step.",
+          "type": "object",
+          "properties": {
+            "eventType": { "type": "string" },
+            "where": { "type": "string" },
+            "within": {
+              "description": "The time window, relative to the timestamp of the preceding event, during which the absence of the specified event is enforced.",
+              "type": "string",
+              "pattern": "^(\\d+)\\s+(seconds|minutes|hours|days)$"
+            }
+          },
+          "required": ["eventType", "within"]
+        }
+      },
+      "required": ["name"],
+      "oneOf": [
+        { "required": ["eventType"] },
+        { "required": ["notFollowedBy"] }
+      ],
+      "additionalProperties": false
+    }
+  }
+}
