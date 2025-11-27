@@ -77,34 +77,34 @@ A JSON schema will be created to formalize the structure of these YAML definitio
 
 ## 7. Advanced Implementation Considerations
 
-While the high-level architecture is defined, successful implementation requires addressing the performance-critical aspects of state management and pattern execution within the Flink CEP engine.
+Successful implementation requires addressing the performance-critical aspects of state management and pattern execution within the Flink CEP engine. This section outlines key tuning strategies and robust design principles.
 
-### 7.1. State Management Performance Tuning
+### 7.1. Performance Tuning and State Management
 
-High-performance CEP is critically dependent on efficient state management to prevent memory exhaustion and ensure low-latency processing. The following techniques must be employed:
+High-performance CEP is critically dependent on minimizing the state space and maximizing parallelism.
 
-*   **State Explosion Prevention**:
-    *   **Early Filtering**: Conditions in patterns (the `where` clause) should be evaluated before an event is fed to the NFA engine. This reduces the number of NFA instances spawned.
-    *   **Partitioning by Correlation Keys**: Using the `correlateBy` field is essential. Flink will create separate, independent state machines for each key, enabling data locality and massive parallelization.
-    *   **Aggressive State Eviction**: Temporal windows (`within` clauses) must be as short as functionally possible. Long-running patterns will inherently consume more memory and must be provisioned accordingly.
+*   **Partitioning (`KeyBy`)**: The `correlateBy` field in our pattern definition is the most critical tuning parameter. It translates directly to a `keyBy` operation in Flink. This partitions the NFA state, creating an independent state machine per key, which enables horizontal scaling and prevents state explosion. **Unkeyed, global patterns must be avoided for high-volume event streams.**
 
-*   **Efficient Window Structures**: Flink's internal data structures (like append-only logs with watermark sweeping) are highly optimized. The key is to provide a correct and efficient watermarking strategy to allow the engine to prune old state effectively.
+*   **State Backend**: For patterns that may run for hours or days, Flink's `RocksDB` state backend should be used to store state on disk, preventing memory exhaustion. Incremental checkpoints must be enabled to ensure fast and efficient fault tolerance.
 
-*   **Shared Automata Prefixes**: When multiple patterns share a common starting sequence (e.g., `A -> B -> C` and `A -> B -> D`), the Flink engine is capable of sharing the state for the common prefix (`A -> B`), significantly reducing memory overhead.
+*   **Watermark Strategy**: A correct watermark strategy is essential for handling out-of-order events. A `BoundedOutOfOrdernessTimestampExtractor` should be configured with a delay that reflects the observed event time skew in the system. A conservative delay increases latency and memory usage, while an aggressive delay risks dropping late events.
 
-### 7.2. Optimization of Negation Detection (`notFollowedBy`)
+*   **Early Filtering**: The `where` clause in a pattern step allows for predicate push-down. This filtering occurs *before* an event is fed to the NFA, reducing the number of partial matches created and thus conserving resources.
 
-Negation is one of the most powerful but computationally expensive features in CEP. A `notFollowedBy` clause requires the engine to maintain state for a period of time, waiting for an event that *doesn't* happen.
+### 7.2. Robust Pattern Design Principles
 
-*   **The Challenge**: For every partial match that enters a state with a negation condition, the engine must monitor subsequent events for the negated event type. This can create significant overhead.
-*   **Optimization Strategy**: The most effective optimization is to **always combine negation with strong correlation keys**. For example, in the `tsd-adr-sla.v1.yaml` pattern, the negation (`notFollowedBy: ADR_Updated`) is tied to the `artifact.id` of the preceding `TSD_Updated` event. This scopes the negation watcher to only look for an `ADR_Updated` event with the *same artifact ID*, drastically reducing the search space. Uncorrelated, global negation patterns should be avoided as they are not scalable.
+Pattern logic must be designed defensively to avoid performance traps and ensure predictable behavior.
 
-### 7.3. Consumption Policies (Skip Strategies)
+#### 7.2.1. Safety Checklist
 
-When a pattern can match multiple times starting from the same event, a consumption policy (or "skip strategy") defines what happens after a match is found.
+1.  **Bound Everything**: All patterns must have a clearly defined and conservative `within` clause. This guarantees that all partial matches are eventually garbage collected. Greedy quantifiers (e.g., repeating steps) must also be bounded.
+2.  **Scope with Keys**: Every pattern must be scoped to a specific context using `correlateBy`. This is the primary mechanism for controlling state size.
+3.  **Make Negation Specific**: Negation (`notFollowedBy`) is the most expensive operation. It should always be used with a short time window and be tightly coupled to the correlation key.
+4.  **Choose a Conscious Consumption Policy**: The `CEP_Agent` will default to a `SKIP_PAST_LAST_EVENT` strategy (`AfterMatchSkipStrategy` in Flink). This provides the most intuitive behavior by preventing a single event from being part of multiple successful matches of the same pattern.
+5.  **Handle Timeouts as Events**: A pattern that does not complete is often as significant as one that does. The `CEP_Agent` should be configured to emit timeout events, allowing downstream systems to observe and react to the absence of expected event sequences.
 
-*   **`NO_SKIP` (Default)**: After a match, the engine will look for all other possible matches starting from the same event. (e.g., `A B1 B2` could match `A -> B` twice).
-*   **`SKIP_PAST_LAST_EVENT`**: After a match is found (e.g., `A -> B`), the engine resumes the search *after* the event that completed the match (`B`). This is the most common and intuitive strategy.
-*   **`SKIP_TO_NEXT`**: If multiple patterns could start at the same event, this strategy discards any partial matches that began at the same location once one of them completes.
+#### 7.2.2. Common Anti-Patterns to Avoid
 
-The declarative pattern schema will default to the `SKIP_PAST_LAST_EVENT` behavior, as it is the most predictable for process compliance use cases. This can be made configurable in future versions of the schema if required.
+*   **Greedy Quantifiers**: Avoid repeating steps (`oneOrMore()`, `timesOrMore()`) without a strict `within` clause. This can lead to an exponential state explosion.
+*   **Unconstrained Correlation**: A pattern without a `correlateBy` key will operate on a global, unpartitioned stream, which is not scalable.
+*   **The "Heavy Negation" Trap**: Using `notFollowedBy` with a long time window can force the engine to keep state for an extended period, leading to high memory pressure. Keep negation windows as short as possible.
