@@ -8,145 +8,96 @@ project: SDLC_IDE
 ---
 
 # 1. Context
-The SDLC_IDE platform requires a multi-agent architecture capable of safely managing all SDLC artifacts. The system needs to preserve deterministic, auditable lifecycle transitions for a canonical SDLC pipeline, while also supporting user-defined custom workflows registered through a declarative mechanism.
+The SDLC_IDE platform requires a multi‑agent architecture to manage SDLC artifacts. The system must enforce a verifiable core SDLC lifecycle while supporting user‑defined custom workflows, extension documents, and semantic relationships.
 
-The platform must support:
-- Strict communication boundaries between core document managers
-- Deterministic, auditable lifecycle transitions
-- User-defined workflow pipelines that remain safe and acyclic
-- Extensible domain modeling through custom document types and schemas
-- AI-assisted analysis via embeddings and event observations
-- Central governance via an Orchestrator that enforces structural, policy, and security guarantees
+**Key Requirements:**
+- Strict communication boundaries between core document managers.
+- Deterministic, auditable lifecycle transitions for both default and custom workflows.
+- Extensible domain modeling through custom artifact types and schemas.
+- Central governance via an Orchestrator that enforces all structural, workflow, and policy rules.
 
 ### Core Constraints
-- The Core DAG is always acyclic.
-- The system provides a default canonical pipeline: `PRD → TSD → ADR → KB`
-- Teams may register custom pipelines through the workflow registry.
-- Extensions must never destabilize or introduce cycles into the Core DAG.
-- Agent communication must enforce:
-    - Determinism
-    - Predictability
-    - Security
-    - Zero implicit propagation
-
-### Architectural Question
-How can SDLC_IDE enforce strict and auditable SDLC governance while still allowing teams to define flexible, domain-specific workflows and semantic extensions?
-
-**Conclusion:** Adopt a Hybrid Directed Graph Architecture.
+- The **Core DAG** must remain strictly acyclic.
+- A canonical **default SDLC pipeline** (`PRD → TSD → ADR → KB`) is provided, but this is **overridable** via a declarative Workflow Registry.
+- Extensions must never introduce upstream influence or cycles into the Core DAG.
 
 # 2. Decision
-SDLC_IDE will adopt a Hybrid Directed Graph Architecture consisting of:
-- **Core Directed Acyclic Graph (DAG)** — The authoritative SDLC lifecycle, with a default pipeline and support for user-defined custom pipelines.
-- **Mesh Extension Layer** — Flexible semantic documents and relations outside the Core lifecycle.
-- **Event-Based Observer Layer** — Event stream for analytics, monitoring, embeddings, and ML signals.
-- **Central Orchestrator** — Governs all graph mutations, workflow validation, and policy enforcement.
+We adopt a **Hybrid Directed Graph Architecture**, composed of four coordinated layers:
+- **Core Directed Acyclic Graph (DAG):** Authoritative SDLC workflow with support for validated, user-defined custom pipelines.
+- **Mesh Extension Layer:** Flexible semantic graph for custom types and domain-specific artifacts.
+- **Event‑Based Observer Layer:** Immutable event stream for analytics, monitoring, and ML.
+- **Central Orchestrator:** Enforces all rules, validates workflows, and mediates all graph mutations.
 
-# 3. Core DAG (Authoritative, Acyclic)
-The Core DAG encodes the SDLC workflow. Its primary invariant is acyclicity.
+# 3. High-Level Architecture Diagram
+```mermaid
+graph TD
+    subgraph CoreDAG ["Core DAG (Default SDLC Flow; User-Configurable)"]
+        direction TB
+        PRD[PRD Manager] -->|Flows Into| TSD[TSD Manager]
+        TSD -->|Triggers| ADR[ADR Manager]
+        ADR -->|Archives Into| KB[Knowledge Manager]
+    end
+    subgraph Mesh ["Mesh Extensions (Flexible, User‑Defined)"]
+        direction TB
+        Comp[Compliance Module] & API[API Spec] & Perf[Performance Model]
+    end
+    subgraph Gov ["Governance & Observation"]
+        Orch[Orchestrator] & Events[Event Stream]
+    end
+    TSD -.->|References| API & Perf
+    PRD -.->|Checked Against| Comp
+    Orch -- Governs --> CoreDAG
+    Orch -- Validates --> Mesh
+```
+*The diagram above illustrates the default SDLC lifecycle. The Core DAG is fully configurable via registered custom workflows.*
 
-### Default Pipeline
-The system provides the canonical flow: `PRD → TSD → ADR → KB`
+# 4. Core DAG (Authoritative, Acyclic, User‑Configurable)
+The Core DAG defines the authoritative SDLC lifecycle. Its sole invariant is **acyclicity**. While a default pipeline is provided, teams can author and register **custom pipelines** (see Appendix A).
 
-### Custom Pipelines
-Teams may register alternative workflows via the Workflow Registry (details in Appendix A). The Orchestrator enforces:
-- Acyclicity
-- Valid artifact types
-- Permissions (OPA)
-- Backwards compatibility on workflow changes
+# 5. Mesh Extension Layer (Flexible, User‑Defined)
+The Mesh Layer supports arbitrary user‑defined documents, schemas, and semantic relationships. Cycles are permitted within the Mesh but must never involve the Core DAG.
 
-### Core DAG Guarantees
-- No cycles, no lateral gossip
-- Deterministic propagation
-- Explicit transitions only
-- Fully governed by the Orchestrator
-- Predictable and auditable evolution
-- Workflow‑level safety for both default and custom pipelines
+# 6. Event‑Based Observer Layer
+A distributed event system provides system-wide observability. It is purely observational and maintains a strict separation between **structure** (graph) and **behavior** (events).
 
-The Core DAG is the authoritative structural backbone of SDLC_IDE.
-
-# 4. Mesh Extension Layer (Flexible, User‑Defined)
-The Mesh Layer allows arbitrary, user‑defined:
-- Document types & Schemas
-- Many‑to‑many semantic edges
-- Analysis artifacts & Compliance modules
-- API specs & Performance models
-- Domain‑specific extension types
-
-### Mesh Characteristics
-- Cycles allowed (but only within Mesh nodes)
-- No Mesh element may become a dependency of a Core node
-- Mesh may annotate or reference Core artifacts, but cannot modify Core structure
-- Edges validated by Orchestrator (rules formalized in ADR‑004)
-
-# 5. Event‑Based Observer Layer
-A distributed event system captures:
-- Document lifecycle events
-- Version updates
-- Agent communication
-- Embedding recalculations
-- Workflow changes
-- Policy evaluation signals
-
-### Event Layer Guarantees
-- Cannot alter Core DAG or Mesh topology
-- Purely observational
-- Drives analytics, ML recommendations, semantic search, and personalization
-
-*Events reflect behavior, not structure.*
-
-# 6. Rationale
-A pure DAG is overly restrictive; a pure mesh is unsafe for lifecycle governance.
+# 7. Rationale
+A pure DAG is too rigid; a pure Mesh is too chaotic. The hybrid model provides the optimal balance.
 
 | Requirement | DAG | Mesh | Hybrid |
 | :--- | :---: | :---: | :---: |
-| Strict SDLC flow | ✔️ | ✖️ | ✔️ |
+| Strict, Auditable Lifecycle | ✔️ | ✖️ | ✔️ |
 | Extensibility | ✖️ | ✔️ | ✔️ |
 | Predictability | ✔️ | ✖️ | ✔️ |
-| Semantic linking | Limited | ✔️ | ✔️ |
-| Policy enforcement | ✔️ | Risky | ✔️ |
+| Semantic Linking | Limited | ✔️ | ✔️ |
 
-The hybrid architecture meets all SDLC_IDE objectives.
+# 8. Consequences
+- **Positive:** Strong governance with deterministic SDLC flows; safe extensibility via custom workflows and the Mesh.
+- **Negative:** Increased Orchestrator complexity; requires schema/ACL design for Mesh documents.
 
-# 7. Consequences
-- **Positive:** Strong governance, deterministic SDLC flow with validated custom pipelines, and safe extensibility.
-- **Negative:** Increased complexity in orchestrator logic; requires schema definitions for mesh nodes.
-- **Tradeoffs:** All structural mutations flow through the Orchestrator; UI must clearly distinguish core lineage vs. semantic relations.
+# 9. Alternatives Considered
+- **Full DAG Only:** Too restrictive; no semantic flexibility.
+- **Full Mesh Only:** Unenforceable lifecycle; chaotic and unsafe for compliance.
+- **Hub‑and‑Spoke:** Central bottleneck; limited expressiveness.
 
-# 8. Alternatives Considered
-- **❌ A. Full DAG Only:** Too rigid; cannot support mesh-like semantic relationships.
-- **❌ B. Full Mesh Only:** No ability to enforce SDLC rules; easy to introduce cycles; unsafe for compliance.
-- **❌ C. Hub-and-Spoke:** Orchestrator bottleneck; insufficient semantic flexibility.
-
-# 9. Decision Outcome
-**Accepted.** SDLC_IDE will implement:
-1. Core DAG (strict, acyclic, user-configurable workflows)
-2. Mesh Extension Layer (flexible semantic graph)
-3. Event Observer Layer (analytics + ML)
-4. Orchestrator enforcing all structural and policy rules
-
-This ADR is the foundational architecture of SDLC_IDE.
+# 10. Decision Outcome
+**Accepted.** This ADR establishes the foundational architecture for the SDLC_IDE platform.
 
 ---
 
 ## Appendix A — Custom Workflow Registration & Enforcement
 
 ### Summary
-The system ships with a default canonical pipeline (`PRD → TSD → ADR → KB`). Teams may register custom pipelines through a declarative workflow registry. The Orchestrator validates all workflows before activation.
+The system ships with a default canonical pipeline (`PRD → TSD → ADR → KB`), but teams may define custom pipelines through the declarative **Workflow Registry**. The Orchestrator validates all workflows before activation.
 
-### Workflow Registration
-- **File Location:** `.sdlc_ide/workflows/<workflow-id>.yaml`
-- **File Requirements:** Each workflow file must include `id`, `version`, `author`, `status` (`draft` | `active` | `deprecated`), `scope`, `nodes`, and `edges`.
+### Declarative Workflow Files
+- **Location:** `.sdlc_ide/workflows/<workflow-id>.yaml`
+- **Required Fields:** `id`, `version`, `author`, `status` (`draft` | `active` | `deprecated`), `scope`, `nodes`, and `edges`.
 
-### Validation Rules
-The Orchestrator enforces:
-- **Acyclicity:** DAG topological validation.
-- **Type Safety:** All nodes must map to known artifact types.
-- **ACLs & Permissions:** Validated via OPA.
-- **Backward Compatibility:** Workflow changes must not invalidate existing artifacts and require explicit migration plans.
+### Governance & Enforcement
+Workflow PRs are subject to:
+1. **Acyclicity Checks** (Topological validation)
+2. **Type Safety Verification** (Nodes map to known artifact types)
+3. **ACL & OPA Policy Validation**
+4. **Backward‑Compatibility Checks** (Ensures no existing artifacts are stranded)
 
-### Activation Lifecycle
-1. Custom workflow PR is submitted.
-2. CI validates structure + OPA policy.
-3. On merge, Orchestrator performs final validation.
-4. Workflow status is set to `active`.
-5. Activation event is recorded in the event stream for full regulatory traceability.
+Upon merge, the Orchestrator performs a final validation, activates the workflow, and logs the event for a full audit trail.
