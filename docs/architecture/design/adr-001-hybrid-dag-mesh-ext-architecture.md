@@ -1,148 +1,141 @@
----
-title: "ADR-001: Hybrid Directed Graph Architecture with Selective Mesh Extensions"
-status: Accepted
-date: 2025-11-27
-project: SDLC_IDE
-author: System Architecture Team
+# ADR-001: Hybrid Directed Graph Architecture with Selective Mesh Extensions
+
+**Status:** Accepted
+**Date:** 2025-11-27
+**Updated:** 2025-11-27
+**Project:** SDLC_IDE
+**Author:** System Architecture Team
+
 ---
 
 ## 1. Context
 
-The SDLC_IDE platform requires a multi-agent architecture capable of managing heterogeneous documentation types across the SDLC lifecycle while maintaining strict structural guarantees. The architecture must support:
+SDLC_IDE requires a multi-agent architecture that:
 
-*   Clear upstream → downstream communication boundaries between core document managers
-*   Deterministic and auditable lifecycle transitions
-*   User-defined extensions without compromising core SDLC integrity
-*   AI-driven analytics (embeddings, semantic search, clustering)
-*   Immutable observability of all state changes
-*   A safe, governed environment for extensibility
+* Manages all documentation types across the SDLC lifecycle
+* Enforces strict communication boundaries between core document managers
+* Maintains deterministic and auditable lifecycle transitions
+* Allows user-defined document types without breaking core flow
+* Supports AI-driven analytics, vector embeddings, and event-based observations
+* Enables safe extensibility while preserving structural integrity
 
 ### Key Constraints
 
-#### Document & Communication
+**Document & Communication:**
 
-*   PRD remains human-authored and human-centric.
-*   TSD must be machine-readable, validated, and generated deterministically.
-*   Core managers follow strict flow: **PRD → TSD → ADR → KB**.
-*   No cycles allowed in core flow.
-*   Communication between agents must be deterministic, explicit, and centrally validated.
+* PRD remains human-centric; TSD must be machine-readable
+* Core document agents (PRD → TSD → ADR → KB) follow a strict one-way pipeline
+* No cycles permitted in core document flow
+* Communication rules must be enforceable, secure, and deterministic
 
-#### Extensibility
+**Extensibility:**
 
-*   Custom document types and custom agents must be supported.
-*   Extensions must not introduce cycles or mutate core documents.
-*   All extensions must declare:
-    *   Schema (JSON Schema)
-    *   Allowed edges
-    *   Embedding strategy
-    *   Lifecycle state
-*   Extensions must pass Orchestrator + Governor validation.
+* System supports extensions (custom document types, agents, relations)
+* Extensions must not introduce cycles or compromise core lifecycle
+* Extensions must follow a declarative model with explicit schema, allowed edges, and lineage
 
-#### Observability & State
+**Observability & State:**
 
-*   All state changes must be emitted as immutable events (ADR-002).
-*   Embeddings (ADR-003) influence semantic navigation only; they cannot override structural rules.
-*   Workspace persistence (ADR-004) must enforce DAG semantics across reloads and branching.
+* All state changes are auditable via immutable event streams (ADR-002)
+* Semantic relationships inferred from embeddings (ADR-003) must not override structural rules
+* Persistent workspace (ADR-004) enforces DAG semantics across restarts
 
 ### Key Design Questions
 
-*   How can custom document types plug in without breaking the SDLC pipeline?
-*   How do we allow flexibility (mesh) while maintaining strong governance?
-*   How do we prevent unauthorized communication or topology violations?
-*   How can mesh validation be decentralized without centralizing all logic?
+* How do custom document types integrate safely?
+* How do we maintain strict control while enabling extensibility?
+* How do agents coordinate without unnecessary network load or unauthorized propagation?
+* How is mesh validation enforced without centralizing all logic?
 
 ---
 
 ## 2. Decision
 
-SDLC_IDE adopts a **Hybrid Directed Graph Architecture** with three integrated layers:
-
----
+Adopt a **Hybrid Directed Graph Architecture** with three integrated layers:
 
 ### A. Core Strict Directed Acyclic Graph (DAG)
 
-Defines the authoritative SDLC lifecycle:
-**PRD Manager → TSD Manager → ADR Manager → KB Manager**
+* Defines communication and dependency flows among core SDLC agents:
 
-#### Properties
+**Flow:** PRD → TSD → ADR → KB
 
-*   No cycles — enforced by Orchestrator (ADR-005).
-*   Deterministic propagation.
-*   Agents communicate only downstream.
-*   No gossip or opportunistic peer messaging.
-*   Governed by a precise Orchestrator state machine.
-*   Full auditability and reproducibility.
-*   **Rule:** The Orchestrator MUST reject all Core mutations not originating from human-approved ADRs.
+**Properties:**
 
-#### Core Agents and Flow Summary
+* Acyclic: enforced by Orchestrator (ADR-005)
+* Deterministic propagation: ordered, observable state transitions
+* Enforced agent communication boundaries: downstream-only calls
+* Full alignment with SDLC lifecycle
+* No gossip traffic; all coordination explicit through Orchestrator
 
-| Agent           | Responsibilities                                                                      | Trigger       | Output        |
-| --------------- | ------------------------------------------------------------------------------------- | ------------- | ------------- |
-| **PRD Manager** | Accepts human-authored PRDs, stores version-controlled artifacts, emits `PRD_Updated` | Human edit    | `PRD_Updated` |
-| **TSD Manager** | Generates/validates TSD from PRD, ensures consistency, emits `TSD_Updated`            | `PRD_Updated` | `TSD_Updated` |
-| **ADR Manager** | Validates architectural decisions vs TSD, emits `ADR_Updated`                         | `TSD_Updated` | `ADR_Updated` |
-| **KB Manager**  | Indexes artifacts, updates semantic/structural knowledge views, emits `KB_Updated`    | `ADR_Updated` | `KB_Updated`  |
+**Core Agents Responsibilities:**
+
+| Agent       | Responsibilities                                                                                                 |
+| ----------- | ---------------------------------------------------------------------------------------------------------------- |
+| PRD Manager | Accepts human-authored PRDs; publishes PRD_Updated events (ADR-002); stores PRD in versioned workspace (ADR-004) |
+| TSD Manager | Triggered by PRD_Updated; validates TSD consistency; publishes TSD_Updated; stores TSD                           |
+| ADR Manager | Triggered by TSD_Updated; validates ADR compliance; publishes ADR_Updated; stores ADR                            |
+| KB Manager  | Triggered by ADR_Updated; indexes and links knowledge artifacts; publishes KB_Updated; manages long-term storage |
+
+**Rationale:**
+
+* Natural one-way flow prevents upstream mutations
+* Single source of truth for downstream documents
+* Enables traceability, compliance, and reproducibility
 
 ---
 
 ### B. Selective Mesh Layer (Extensions)
 
-Supports custom document types, semantic relations, and lateral workflows.
+* Supports user-defined document types and custom workflows safely
 
-#### Characteristics
+**Mesh Characteristics:**
 
-*   Completely user-defined document schemas.
-*   All custom document types declare:
-    *   Schema
-    *   Inbound/outbound edges
-    *   Embedding strategy
-    *   Lifecycle state
-*   Mesh edges may connect to core or mesh, but **never mutate core nodes**.
-*   Orchestrator validates structural rules; Governor enforces policies.
+* Explicit declaration: schema, allowed edges, embedding strategy, lifecycle
+* Orthogonal to Core DAG: cannot mutate core artifacts, cannot create cycles, cannot bypass Orchestrator validation
+* Optional peer-to-peer gossip **only within approved clusters**
+* Semantic linking via embeddings (ADR-003); structural rules always defer to DAG
 
-#### Gossip Rules
+**Example Mesh Extension:**
 
-*   Allowed only within isolated mesh clusters.
-*   Forbidden in core DAG.
-*   Mesh gossip cannot influence or update core state.
-
-#### Embedding Rules
-
-*   Embeddings create **semantic**, not structural, links.
-*   All embeddings must defer to Orchestrator for lifecycle decisions.
-
-#### Example Mesh Extension
-
-```yaml
-type: ArchitectureDiagram
-schema: diagram.schema.json
-inbound_edges: ["ADR"]
-outbound_edges: []
-embedding_strategy: structural+image
-lifecycle: mesh
+```json
+{
+  "type": "ArchitectureDiagram",
+  "schema": "diagram.schema.json",
+  "inbound_edges": ["ADR"],
+  "outbound_edges": [],
+  "embedding_strategy": "structural + image",
+  "lifecycle": "mesh"
+}
 ```
+
+**Orchestrator Validation Checks:**
+
+* No cycle creation
+* Whitelisted inbound/outbound edges
+* Valid embedding strategy
+* Approved mesh cluster
+* Allow write
 
 ---
 
 ### C. Event-Based Observer Layer
 
-Immutable, append-only event stream per ADR-002.
+* Observes all system activity (Kafka/Pulsar/NATS, ADR-002)
 
-#### Captures
+**Captured Events:**
 
-*   All lifecycle transitions
-*   All agent-to-agent interactions
-*   All user edits
-*   All merges / rollback operations
-*   Embedding updates
-*   Validation failures / policy violations
+* Document lifecycle changes (PRD_Updated, etc.)
+* Agent-to-agent communication
+* User interactions (edits)
+* Version control events (commits, merges, rollbacks)
+* Embedding updates
+* Policy/compliance violations
 
-#### Properties
+**Properties:**
 
-*   Immutable
-*   Schematized
-*   Observational only (never authoritative)
-*   Foundation for analytics, search, and replay
+* Observational only (non-authoritative)
+* Immutable, append-only
+* Schematized and versioned (backward additive)
 
 ---
 
@@ -150,13 +143,15 @@ Immutable, append-only event stream per ADR-002.
 
 ```mermaid
 graph TD
+%% --- Core DAG ---
 subgraph CoreDAG ["Core DAG (Authoritative SDLC Pipeline)"]
     direction TB
-    PRD[PRD Manager] --> TSD[TSD Manager]
-    TSD --> ADR[ADR Manager]
-    ADR --> KB[Knowledge Manager]
+    PRD[PRD Manager] -->|Flows Into| TSD[TSD Manager]
+    TSD -->|Triggers| ADR[ADR Manager]
+    ADR -->|Archives Into| KB[Knowledge Manager]
 end
 
+%% --- Mesh Layer ---
 subgraph Mesh ["Mesh Extensions (Flexible, User-Defined)"]
     direction TB
     Comp[Compliance Module]
@@ -164,15 +159,17 @@ subgraph Mesh ["Mesh Extensions (Flexible, User-Defined)"]
     Perf[Performance Model]
 end
 
+%% --- Governance & Observation ---
 subgraph Gov ["Governance & Observation"]
     Orch[Orchestrator]
-    Govr[Governor (OPA/Rego)]
+    Govr[Governor OPA/Rego]
     Events[Event Stream]
 end
 
-TSD -.-> API
-TSD -.-> Perf
-PRD -.-> Comp
+%% --- Edges ---
+TSD -.->|References| API
+TSD -.->|References| Perf
+PRD -.->|Checked Against| Comp
 
 Orch -- Governs --> PRD
 Orch -- Governs --> TSD
@@ -183,216 +180,157 @@ Orch -- Validates --> Mesh
 Govr -- ACL/Policy --> Orch
 Govr -- ACL/Policy --> Mesh
 
-PRD -.- Events
-TSD -.- Events
-ADR -.- Events
-KB -.- Events
-Comp -.- Events
-API -.- Events
-Perf -.- Events
+PRD -.-|Emits Events| Events
+TSD -.-|Emits Events| Events
+ADR -.-|Emits Events| Events
+KB -.-|Emits Events| Events
+Comp -.-|Emits Events| Events
+API -.-|Emits Events| Events
+Perf -.-|Emits Events| Events
 ```
 
 ---
 
 ## 4. Rationale
 
-### Why a Core DAG?
-
-*   Natural fit for SDLC workflows.
-*   Prevents backward mutations and ensures alignment.
-*   Guarantees deterministic, auditable state transitions.
-*   Enables reproducible builds and compliance.
-
-### Why a Mesh?
-
-*   Supports unbounded extensibility.
-*   Enables semantic, contextual, and lateral relationships.
-*   Preserves strict separation from core DAG.
-*   Allows AI-driven discovery without structural compromise.
-
-### Why Hybrid?
-
 | Requirement         | DAG Only | Mesh Only | Hybrid |
 | ------------------- | -------- | --------- | ------ |
 | Strict SDLC flow    | ✅        | ❌         | ✅      |
 | Extensibility       | ❌        | ✅         | ✅      |
 | Predictability      | ✅        | ❌         | ✅      |
-| Semantic links      | Limited  | ✅         | ✅      |
-| Governance strength | Strong   | Weak      | Strong |
-| Auditability        | High     | Low       | High   |
+| Semantic relations  | Limited  | ✅         | ✅      |
+| Safety & governance | ✅        | ❌ Risky   | ✅      |
+| Auditability        | ✅        | ❌         | ✅      |
 
-The hybrid approach is the only one that supports both **formal lifecycle guarantees** and **flexible extensibility**.
+* **Hybrid** satisfies all requirements
+* DAG ensures deterministic SDLC flow
+* Mesh provides safe extensibility and semantic linking
 
 ---
 
 ## 5. Consequences
 
-### Positive
+**Positive:**
 
-*   Deterministic SDLC lifecycle.
-*   Strong governance (Orchestrator + Governor).
-*   Safe extensibility through declarative mesh topology.
-*   Perfect traceability via event logs and versioned workspace.
-*   Clear separation of authoritative vs semantic relationships.
+* Strong governance via Orchestrator
+* Deterministic workflow (PRD → TSD → ADR → KB)
+* Safe extensibility for custom types
+* Clear visualization & dependency mapping
+* Topological validation prevents cycles
+* Embedding-based inference aligns with DAG rules
 
-### Negative
+**Negative:**
 
-*   Increased complexity in orchestration.
-*   All extensions require schema + edge definitions.
-*   Higher governance overhead for policy management (OPA/Rego).
+* Implementation complexity (cycle detection, mesh validation, policy enforcement)
+* Explicit ACL/schema declaration required
+* Careful mesh validation needed
 
-### Neutral / Trade-offs
+**Neutral / Tradeoffs:**
 
-*   Extensions are powerful but not freeform.
-*   All topology changes require Orchestrator approval.
-*   Gossip is allowed only within mesh.
-*   Orchestrator must support cycle detection, policy execution, and transactional writes.
+* Extensions are powerful but require declaration
+* Graph changes require Orchestrator approval
+* Core gossip prohibited; only within mesh clusters
 
 ---
 
 ## 6. Alternatives Considered
 
-### A. Full DAG
+* **Full DAG Only:** Too rigid for custom documents
+* **Full Mesh Only:** Cannot enforce lifecycle or prevent cycles
+* **Hub-and-Spoke:** Bottleneck and limited extensibility
 
-Rejected — too rigid, lacks semantic flexibility.
-
-### B. Full Mesh
-
-Rejected — nondeterministic, unsafe, ungovernable.
-
-### C. Hub-and-Spoke
-
-Rejected — orchestrator bottleneck, loses mesh expressiveness.
+**Decision:** Hybrid DAG + Mesh + Observability layer
 
 ---
 
 ## 7. Decision Outcome
 
-**Accepted.**
-SDLC_IDE will implement:
+* **Accepted.** SDLC_IDE uses Hybrid Directed Graph Architecture:
 
-*   Core strict DAG
-*   Selective mesh layer
-*   Immutable observational event stream
-*   Hybrid governance (Orchestrator + OPA/Rego Governor)
+  * Core DAG: strict, deterministic flow
+  * Selective Mesh: declared, validated, governed
+  * Event Layer: append-only observability
+  * Unified persistence in version-controlled workspace
 
 ---
 
 ## 8. Dependencies & Cross-References
 
-### Depends On
+**Depends On:** None
+**Depended By:** ADR-002 → ADR-007
 
-None (Foundational).
+**Required Updates:**
 
-### Depended By
-
-*   ADR-002 Event Streaming
-*   ADR-003 Vectorization
-*   ADR-004 Persistence
-*   ADR-005 Orchestrator
-*   ADR-006 Custom Document Types
-*   ADR-007 Failure Modes
-*   ADR-009 Core System Agents
-
-### Required Updates to Other ADRs
-
-| ADR     | Update Needed                                | Status  |
-| ------- | -------------------------------------------- | ------- |
-| ADR-002 | Ordering guarantees for DAG artifacts        | Pending |
-| ADR-003 | Embeddings must defer to Orchestrator        | Pending |
-| ADR-004 | Workspace enforces DAG + mesh topology       | Pending |
-| ADR-005 | Cycle detection + mesh validation algorithms | Pending |
-| ADR-006 | Extension schema + edge declarations         | Pending |
-| ADR-007 | Align failure modes with event layer         | Pending |
+| ADR     | Update Needed                     | Details                                                            |
+| ------- | --------------------------------- | ------------------------------------------------------------------ |
+| ADR-001 | Mesh validation rules             | Deferred to ADR-005                                                |
+| ADR-001 | Explicit ACL semantics            | Deferred to ADR-005 / ADR-006                                      |
+| ADR-001 | Gossip scope clarification        | Added; only within mesh clusters                                   |
+| ADR-002 | Ordering guarantees               | Partition by artifact_id; causal ordering via Dependency_Evaluated |
+| ADR-003 | Structural embeddings             | Must defer to orchestrator + schema validation                     |
+| ADR-004 | DAG enforcement                   | Workspace reflects core + mesh; Orchestrator enforces writes       |
+| ADR-005 | Cycle detection & mesh validation | Must enforce acyclicity & allowed edges                            |
 
 ---
 
 ## 9. Implementation Notes
 
-### ADR-005 Orchestrator
-
-Implements:
-
-*   Core state machine
-*   Cycle detection
-*   Mesh edge validation
-*   Transaction boundaries
-*   Coordination with Governor
-*   Event ingestion (observational)
-
-### ADR-004 Persistence
-
-Workspace must:
-
-*   Separate core from extensions
-*   Support branching/merging/rollbacks
-*   Allow transactional write enforcement
-*   Reflect DAG + mesh topology explicitly
-
-### ADR-006 Extensions
-
-Custom types must:
-
-*   Declare schema, edges, embedding strategy
-*   Pass Orchestrator + Governor checks
-*   Emit events
+* **ADR-005 (Orchestrator):** core state machine, cycle detection, mesh validation, event consumption, transaction model
+* **ADR-004 (Persistence):** store core and mesh artifacts; enforce DAG; branching/merging under governance
+* **ADR-006 (Custom Integration):** declare schema, edges, embedding strategy; pass orchestrator validation; integrate into workspace; publish events
 
 ---
 
-## 10. Open Questions
+## 10. Open Questions (Deferred to Dependent ADRs)
 
-| Question             | Answered In       | Status  |
-| -------------------- | ----------------- | ------- |
-| Mesh edge validation | ADR-005           | Pending |
-| ACL model            | ADR-005 / ADR-006 | Pending |
-| Transaction model    | ADR-004 / ADR-005 | Pending |
-| Failure handling     | ADR-007           | Pending |
+| Question                | Addressed In      | Status  |
+| ----------------------- | ----------------- | ------- |
+| Mesh edge validation    | ADR-005           | Pending |
+| ACL model               | ADR-005 & ADR-006 | Pending |
+| State persistence       | ADR-004           | Pending |
+| Transaction model       | ADR-005 & ADR-004 | Pending |
+| Custom type integration | ADR-006           | Pending |
+| Failure handling        | ADR-007           | Pending |
 
 ---
 
 ## 11. Glossary
 
-| Term             | Definition                                             |
-| ---------------- | ------------------------------------------------------ |
-| **DAG**          | Authoritative SDLC flow with no cycles                 |
-| **Mesh**         | Flexible extension layer for user-defined documents    |
-| **Orchestrator** | Enforces structural rules and lifecycle transitions    |
-| **Governor**     | OPA/Rego engine enforcing ACLs, compliance, and policy |
-| **Embedding**    | Vectorized semantic representation (non-authoritative) |
-| **Event**        | Immutable observation of system activity               |
-| **Workspace**    | Version-controlled repository of artifacts and state   |
-| **Gossip**       | Peer-to-peer messaging allowed only within mesh        |
+| Term         | Definition                                           |
+| ------------ | ---------------------------------------------------- |
+| DAG          | Directed Acyclic Graph; core SDLC flow               |
+| Mesh         | Extension layer for custom documents                 |
+| Orchestrator | Central service enforcing rules (ADR-005)            |
+| Governor     | Policy engine enforcing compliance (ADR-005)         |
+| Embedding    | Vector representation for semantic linking (ADR-003) |
+| Event        | Immutable record in event stream (ADR-002)           |
+| Workspace    | Version-controlled directory (.sdlc_ide/)            |
+| Gossip       | P2P communication within mesh clusters only          |
 
 ---
 
-## 12. Appendix — Example State Transition
+## 12. Example DAG State Transition
 
-### Human updates PRD-42
+**Initial State:** PRD-42 “Build payments microservice”
+**Event Flow:**
 
-1.  `PRD_Updated` emitted
-2.  Orchestrator marks TSD-42 pending_sync
-3.  TSD regenerates & publishes `TSD_Updated`
-4.  Orchestrator revalidates ADR
-5.  ADR publishes `ADR_Updated`
-6.  KB reindexes
-7.  Final state: **PRD-42 → TSD-42 → ADR-42 → KB-42**
+1. Human updates PRD-42
+2. Orchestrator receives PRD_Updated event
+3. Checks TSD-42; marks as pending_sync
+4. TSD Manager re-validates → updates → publishes TSD_Updated
+5. ADR Manager re-validates → publishes ADR_Updated
+6. KB Manager indexes → publishes KB_Updated
 
-### Optional Sequence Diagram
+**Final State:** PRD → TSD → ADR → KB consistent
 
-```mermaid
-sequenceDiagram
-    participant Human
-    participant PRD
-    participant TSD
-    participant ADR
-    participant KB
-    participant Orch
+---
 
-    Human->>PRD: Edit PRD-42
-    PRD->>Orch: Emit PRD_Updated
-    Orch->>TSD: Mark TSD-42 stale
-    TSD->>Orch: Emit TSD_Updated
-    Orch->>ADR: Revalidate ADR-42
-    ADR->>Orch: Emit ADR_Updated
-    Orch->>KB: Reindex KB-42
-```
+## 13. References
+
+* ADR-002: Event Streaming Layer
+* ADR-003: Vectorization & Embedding Strategy
+* ADR-004: Unified Memory & Persistence Layer
+* ADR-005: Orchestrator & Governor Architecture
+* ADR-006: Custom Document Type Integration
+* ADR-007: Failure Modes & Degradation
+* ADR-009: Core System Agents
