@@ -124,6 +124,81 @@ lifecycle: mesh
 
 ---
 
+### B.1 Self-Proposing Extensions Architecture (Hybrid Governance Model)
+
+**SDLC_IDE supports dynamic, autonomous system extension exclusively through the Mesh layer. The system may discover needs, generate extension proposals, and submit them to a two-stage validation pipeline. First, the Orchestrator validates the proposal for structural integrity, and second, the Governor validates it for policy compliance. If both approve, the new Mesh type is autonomously registered. The Core DAG remains immutable and cannot be altered by autonomous agents; any modification to the Core flow requires explicit human approval via the ADR governance process.**
+
+#### Autonomous Extension Pipeline
+
+1.  **Discovery**
+    Agents analyze system behavior, document patterns, and user workflows to detect emergent needs.
+
+2.  **Proposal Generation**
+    Agents generate a **Mesh Extension Spec (MES)** including:
+
+    *   schema
+    *   allowed edges
+    *   embedding strategy
+    *   lifecycle definition
+    *   intended semantics
+
+3.  **Structural Validation (Orchestrator)**
+    The Orchestrator enforces:
+
+    *   cycle detection
+    *   DAG boundary protection
+    *   lifecycle invariants
+    *   safe topology rules
+    *   mesh isolation guarantees
+
+4.  **Policy & ACL Validation (Governor / OPA/Rego)**
+    Governor enforces:
+
+    *   access control
+    *   compliance requirements
+    *   semantic policy constraints
+    *   organizational rules
+
+5.  **Autonomous Registration**
+    If both the Orchestrator and Governor approve:
+
+    *   the Mesh type is registered
+    *   indexing and embeddings initialized
+    *   UI affordances generated
+    *   full observability events emitted
+
+```mermaid
+graph TD
+    subgraph "Autonomous Agent"
+        A[Discovery: Detect Need] --> B{Proposal Generation};
+        B -- MES --> C;
+    end
+
+    subgraph "Governance"
+        C[Structural Validation] -->|Pass| D[Policy & ACL Validation];
+        C -->|Fail| F[Reject & Emit Event];
+        D -->|Fail| F;
+        D --|>|Pass| E[Autonomous Registration];
+    end
+
+    subgraph "System State"
+        E --> G[New Mesh Type Registered];
+    end
+
+    style F fill:#f9f,stroke:#333,stroke-width:2px
+    style G fill:#9f9,stroke:#333,stroke-width:2px
+```
+
+#### Constraints
+
+*   Autonomous agents **MUST NOT** mutate or propose Core DAG changes.
+*   Extensions **MUST** pass structural and policy validation.
+*   Mesh-to-Core edges **MUST NOT** create cycles or bypass lifecycle rules.
+*   All extension proposals, approvals, and failures **MUST** be emitted as immutable events (ADR-002).
+*   Only humans, via ADR workflows, may modify Core DAG structure.
+
+---
+
 ### C. Event-Based Observer Layer
 
 Immutable, append-only event stream per ADR-002.
@@ -157,7 +232,7 @@ subgraph CoreDAG ["Core DAG (Authoritative SDLC Pipeline)"]
     ADR --> KB[Knowledge Manager]
 end
 
-subgraph Mesh ["Mesh Extensions (Flexible, User-Defined)"]
+subgraph Mesh ["Mesh Extensions (Self-Proposing, Flexible, User-Defined)"]
     direction TB
     Comp[Compliance Module]
     API[API Spec]
@@ -221,7 +296,7 @@ Perf -.- Events
 | Governance strength | Strong   | Weak      | Strong |
 | Auditability        | High     | Low       | High   |
 
-The hybrid approach is the only one that supports both **formal lifecycle guarantees** and **flexible extensibility**.
+The hybrid approach is the only one that supports both **formal lifecycle guarantees** and **autonomous extensibility**.
 
 ---
 
@@ -362,6 +437,7 @@ Custom types must:
 | **Event**        | Immutable observation of system activity               |
 | **Workspace**    | Version-controlled repository of artifacts and state   |
 | **Gossip**       | Peer-to-peer messaging allowed only within mesh        |
+| **Mesh Extension Spec (MES)** | A structured proposal for a dynamic Mesh type. |
 
 ---
 
