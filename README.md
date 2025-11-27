@@ -123,7 +123,7 @@ Once you have installed OPA and Conftest, you can run the governance checks loca
 The following command will execute the OPA policy against all ADRs in the `docs/adr` directory:
 
 ```bash
-conftest test docs/adr/ --policy docs/governance/policies/adr_policy.rego --namespace sdlc.governance
+conftest test docs/architecture/design/ --policy docs/governance/policies/adr_policy.rego --namespace sdlc.governance
 ```
 
 If all the checks pass, you will see a confirmation message in your terminal. If any of the checks fail, you will see a detailed report of the violations.
