@@ -1,0 +1,8 @@
+{
+  "identity": {
+    "groups": {
+      "team:platform-security": ["github:bob", "github:charlie", "service:security-scanner"],
+      "team:platform": ["github:alice", "service:ci-runner-v2"]
+    }
+  }
+}

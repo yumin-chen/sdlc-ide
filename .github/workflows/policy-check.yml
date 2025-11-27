@@ -1,0 +1,70 @@
+name: OPA Policy CI Check
+
+on:
+  pull_request:
+    paths:
+      - 'templates/**.json'
+      - 'policy/**.rego'
+      - 'policy/**.json'
+
+jobs:
+  validate-policy-and-templates:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up OPA
+        uses: open-policy-agent/setup-opa@v2
+        with:
+          opa-version: 0.50.0
+
+      - name: Run OPA unit tests
+        run: |
+          opa test policy/ --verbose
+
+      - name: Identify changed templates
+        id: changed_files
+        uses: tj-actions/changed-files@v35
+        with:
+          files: |
+            templates/**.json
+
+      - name: Evaluate changed templates against policy
+        if: steps.changed_files.outputs.any_changed == 'true'
+        run: |
+          echo "Evaluating changed templates..."
+          FAIL=0
+          for f in ${{ steps.changed_files.outputs.all_changed_files }}; do
+            echo "---"
+            echo "Checking template: $f"
+            # The input document for evaluation must match the structure the policy expects.
+            # Here, we construct a mock 'input' object around the template's content.
+            INPUT_DOC=$(jq -n --argfile t "$f" '{
+              "action": "register_template",
+              "actor": {"principal_id": "service:ci-linter", "roles": ["template_author"]},
+              "template": $t
+            }')
+
+            RESULT=$(opa eval --data policy/ --input <(echo "$INPUT_DOC") "data.template.authz.allow")
+
+            # OPA eval returns 'true' or 'false' as plain text
+            if [ "$RESULT" = "true" ]; then
+              echo "✅ Policy check PASSED for $f"
+            else
+              echo "❌ Policy check FAILED for $f"
+              # Optionally, get the reasons for failure
+              REASONS=$(opa eval --data policy/ --input <(echo "$INPUT_DOC") "data.template.authz.reasons")
+              echo "Reasons: $REASONS"
+              FAIL=1
+            fi
+          done
+
+          if [ "$FAIL" -eq 1 ]; then
+            echo "---"
+            echo "One or more templates failed the policy check."
+            exit 1
+          fi
+        env:
+          CHANGED: ${{ steps.changed_files.outputs.all_changed_files }}
