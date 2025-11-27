@@ -72,7 +72,6 @@ Defines the authoritative SDLC lifecycle:
 *   No gossip or opportunistic peer messaging.
 *   Governed by a precise Orchestrator state machine.
 *   Full auditability and reproducibility.
-*   **Rule:** The Orchestrator MUST reject all Core mutations not originating from human-approved ADRs.
 
 #### Core Agents and Flow Summary
 
@@ -124,7 +123,39 @@ lifecycle: mesh
 
 ---
 
-### C. Event-Based Observer Layer
+### C. Self-Proposing Extensions Architecture
+
+The Self-Proposing Extensions Architecture enables SDLC_IDE to autonomously discover system needs, generate structured extension proposals, validate them through deterministic orchestration rules, enforce compliance through the policy layer, and register new Mesh-level types at runtime. Core DAG primitives remain immutable and can only be modified with explicit human approval via ADR governance workflows.
+
+#### The 5-Stage Model
+
+1.  **Stage 1 — Discovery (Autonomous):** Agents analyze user workflows, document patterns, and structural gaps to produce a Draft Extension Proposal (DEP).
+2.  **Stage 2 — Proposal Generation (Autonomous):** The system generates a formal Mesh Extension Spec (MES), including the proposed document type, lifecycle schema, relations, and policies.
+3.  **Stage 3 — Structural Validation (Orchestrator):** The Orchestrator applies deterministic rules, including cycle detection, topological validity, edge legality, and lifecycle correctness. If any constraint fails, the proposal is rejected.
+4.  **Stage 4 — Policy & ACL Validation (Governor / OPA/Rego):** The Governor applies non-structural rules, such as access control, security posture, compliance requirements, and organizational constraints. If a policy fails, the proposal is rejected.
+5.  **Stage 5 — Autonomous Registration (Mesh Layer Only):** If both validators pass, the new Mesh type is registered, its lifecycle is instantiated, and agents are allowed to use the new type, all without human involvement. The Core DAG remains untouched.
+
+#### Process Flow Diagram
+```mermaid
+graph TD
+    A["Autonomous Agents<br>(Discovery & Proposal Gen)"] --> B["Mesh Extension Spec (MES)"];
+    B --> C{"Orchestrator<br>Structural Rules"};
+    B --> D{"Governor<br>Policy + ACLs"};
+    C --> E["Mesh Registry<br>(Dynamic Types)"];
+    D --> E;
+    E --> F[Runtime Mesh Layer];
+```
+
+#### Responsibility Decomposition
+*   **Autonomous Agents:** Perform pattern detection and generate extension proposals.
+*   **Orchestrator:** Guarantees structural safety and maintains DAG invariants.
+*   **Governor (OPA/Rego):** Enforces semantic, compliance, and ACL rules.
+*   **Mesh Registry:** Stores and provides runtime discoverability for all accepted Mesh types.
+
+#### Safety & Control Model
+This architecture is safe because the Core DAG cannot be mutated automatically, and all extensions must pass through two independent validation systems (Orchestrator and Governor). It is flexible because the Mesh layer provides infinite runtime adaptability, allowing the system to evolve faster than human-defined SDLC standards while remaining auditable and deterministic.
+
+### D. Event-Based Observer Layer
 
 Immutable, append-only event stream per ADR-002.
 
