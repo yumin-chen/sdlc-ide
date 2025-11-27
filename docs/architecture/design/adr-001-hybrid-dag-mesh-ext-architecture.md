@@ -72,6 +72,7 @@ Defines the authoritative SDLC lifecycle:
 *   Agents communicate only downstream.
 *   No gossip or opportunistic peer messaging.
 *   Governed by a precise Orchestrator state machine.
+*   The Orchestrator MUST reject all mutations to Core system behavior, topology, or governance rules not originating from a human-approved ADR.
 *   Full auditability and reproducibility.
 
 #### Core Agents and Flow Summary
@@ -124,6 +125,57 @@ embedding_strategy: structural+image
 lifecycle: mesh
 ```
 
+---
+
+## **B.1 Self-Proposing Extensions Architecture (Hybrid Orchestrator + Governor Model)**
+
+**SDLC_IDE supports dynamic, autonomous system extension exclusively through the Mesh layer. The system may discover needs, generate extension proposals, validate them structurally through the Orchestrator, enforce safety and compliance through the Governor (OPA/Rego), and register new Mesh types automatically. The Core DAG remains immutable and cannot be altered by autonomous agents; any modification to the Core flow requires explicit human approval via the ADR governance process.**
+
+### **Autonomous Extension Pipeline**
+
+1. **Discovery**
+   Agents identify repeated patterns, missing document concepts, or emerging structural needs.
+
+2. **Proposal Generation**
+   A Mesh Extension Spec (MES) is generated containing:
+
+   * schema
+   * allowed edges
+   * lifecycle state
+   * embedding strategy
+   * intended semantics
+
+3. **Orchestrator Validation (Structural)**
+
+   * cycle detection
+   * topology rules
+   * core boundary protection
+   * lifecycle/schema invariants
+   * safe edge semantics
+
+4. **Governor Validation (Policy / ACL)**
+
+   * access control
+   * compliance rules
+   * semantic policy restrictions
+   * cross-domain constraints
+
+5. **Registration**
+   If both validations succeed:
+
+   * new Mesh type becomes available at runtime
+   * embeddings and indexing initialized
+   * events emitted for full auditability
+
+### **Constraints**
+
+* Extensions **must not mutate or override Core DAG rules**.
+* Extensions **must not introduce cycles**.
+* Extensions **must pass both structural and policy validation**.
+* Mesh gossip **must not influence core agent lifecycles**.
+* All extension proposals, approvals, and rejections **must be emitted as immutable events**.
+
+---
 ### C. Event-Based Observer Layer
 
 Immutable, append-only event stream per ADR-002.
