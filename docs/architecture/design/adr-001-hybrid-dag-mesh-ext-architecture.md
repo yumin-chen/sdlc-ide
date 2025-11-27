@@ -111,6 +111,47 @@ Supports custom document types, semantic relations, and lateral workflows.
 *   Embeddings create **semantic**, not structural, links.
 *   All embeddings must defer to Orchestrator for lifecycle decisions.
 
+#### B.1 Self-Proposing Extensions Architecture (Hybrid Governance Model)
+
+SDLC_IDE supports dynamic, autonomous system extension exclusively through the Mesh layer. The system may discover needs, generate extension proposals, validate them structurally through the Orchestrator, enforce safety and compliance through the Governor (OPA/Rego), and register new Mesh types automatically. The Core DAG remains immutable and cannot be altered by autonomous agents; any modification to the Core flow requires explicit human approval via the ADR governance process.
+
+##### Autonomous Extension Pipeline
+
+```mermaid
+sequenceDiagram
+    participant Agent
+    participant Orch as Orchestrator
+    participant Gov as Governor
+    participant Registry
+
+    Agent->>Agent: 1. Discover Need
+    Agent->>Orch: 2. Propose MES
+    Orch->>Orch: 3. Validate Structure (Cycle, DAG Boundaries)
+    alt Structural Validation Fails
+        Orch-->>Agent: Reject MES
+    else Structural Validation Succeeds
+        Orch->>Gov: 4. Validate Policy (ACL, Compliance)
+        alt Policy Validation Fails
+            Gov-->>Orch: Deny MES
+            Orch-->>Agent: Reject MES
+        else Policy Validation Succeeds
+            Gov-->>Orch: Approve MES
+            Orch->>Registry: 5. Register New Mesh Type
+            Registry-->>Orch: Confirm Registration
+            Orch-->>Agent: Approve MES
+        end
+    end
+end
+```
+
+##### Constraints
+
+*   Autonomous agents **MUST NOT** mutate or propose Core DAG changes.
+*   Extensions **MUST** pass structural and policy validation.
+*   Mesh-to-Core edges **MUST NOT** create cycles or bypass lifecycle rules.
+*   All extension proposals, approvals, and failures **MUST** be emitted as immutable events (ADR-002).
+*   Only humans, via ADR workflows, may modify Core DAG structure.
+
 #### Example Mesh Extension
 
 ```yaml
@@ -296,14 +337,14 @@ None (Foundational).
 
 ### Required Updates to Other ADRs
 
-| ADR     | Update Needed                                | Status  |
-| ------- | -------------------------------------------- | ------- |
-| ADR-002 | Ordering guarantees for DAG artifacts        | Pending |
-| ADR-003 | Embeddings must defer to Orchestrator        | Pending |
-| ADR-004 | Workspace enforces DAG + mesh topology       | Pending |
-| ADR-005 | Cycle detection + mesh validation algorithms | Pending |
-| ADR-006 | Extension schema + edge declarations         | Pending |
-| ADR-007 | Align failure modes with event layer         | Pending |
+| ADR     | Update Needed                                                                    | Status  |
+| ------- | -------------------------------------------------------------------------------- | ------- |
+| ADR-002 | Define event schemas for `MES_Proposed`, `MES_Validated`, `MES_Rejected`         | Pending |
+| ADR-003 | Embeddings must defer to Orchestrator                                            | Pending |
+| ADR-004 | Workspace enforces DAG + mesh topology                                           | Pending |
+| ADR-005 | Define validation logic for incoming MES proposals against graph topology        | Pending |
+| ADR-006 | Formalize the Mesh Extension Spec (MES) schema and registration process          | Pending |
+| ADR-007 | Align failure modes with the self-proposing extension pipeline (e.g., validation failure) | Pending |
 
 ---
 
@@ -319,6 +360,7 @@ Implements:
 *   Transaction boundaries
 *   Coordination with Governor
 *   Event ingestion (observational)
+*   **Must** reject autonomous proposals attempting to mutate the Core DAG.
 
 ### ADR-004 Persistence
 
@@ -362,6 +404,7 @@ Custom types must:
 | **Event**        | Immutable observation of system activity               |
 | **Workspace**    | Version-controlled repository of artifacts and state   |
 | **Gossip**       | Peer-to-peer messaging allowed only within mesh        |
+| **MES**          | Mesh Extension Spec: A structured proposal for a dynamic Mesh type. |
 
 ---
 
