@@ -21,7 +21,7 @@ The system is built on a **Hybrid Directed Graph Architecture** that combines a 
 
 The architecture of SDLC_IDE is composed of three main components:
 
-  * **Core Directed Acyclic Graph (DAG):** Defines the strict, deterministic workflow for core SDLC documents, ensuring they follow a predefined lifecycle. This graph manages the transition between primary artifacts like the **Product Requirements Document (PRD)**, **Technical Specification Document (TSD)**, and **Architecture Decision Records (ADRs)**.
+  * **Core Directed Acyclic Graph (DAG):** Defines the strict, deterministic workflow for core SDLC documents, ensuring they follow a predefined lifecycle. This graph manages the transition between primary artifacts like the **Product Requirements Document (PRD)**, which can lead to either a **Technical Specification Document (TSD)** or an **Architecture Decision Record (ADR)**. TSDs may also reference ADRs.
   * **Selective Mesh Extension Layer:** Allows for the integration of user-defined document types and relationships, providing flexibility and extensibility (e.g., Compliance Policies, API Specifications).
   * **Event-Based Observer Layer:** Captures and analyzes all status and relationship events throughout the system. This layer provides crucial **insights and enables AI-driven assistance**, such as proactively suggesting relevant API specs when a TSD is being drafted, or flagging potential compliance violations.
 
@@ -30,7 +30,8 @@ graph TD
     subgraph CoreDAG ["Core DAG (Strict SDLC Flow)"]
         direction TB
         PRD[PRD Manager] -->|Flows Into| TSD[TSD Manager]
-        TSD -->|Triggers| ADR[ADR Manager]
+        PRD -->|Leads To| ADR[ADR Manager]
+        TSD -.->|References| ADR
         ADR -->|Archives To| KB[KB Manager]
     end
 
