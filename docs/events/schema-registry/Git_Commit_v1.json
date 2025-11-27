@@ -1,16 +1,17 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://your-org.com/events/Git_Commit_v1.json",
   "title": "Git_Commit.v1",
   "type": "object",
-  "required": ["type", "schema_version", "ts", "commit_hash", "author", "message"],
+  "required": ["type", "schema_version", "ts", "commitHash", "author", "message"],
   "properties": {
-    "type": { "type": "string" },
-    "schema_version": { "type": "string", "pattern": "^v[0-9]+$" },
-    "ts": { "type": "string", "format": "date-time" },
-    "commit_hash": { "type": "string" },
-    "author": { "type": "string" },
-    "message": { "type": "string" },
-    "files_changed": { "type": "array", "items": { "type": "string" } }
+    "type": { "const": "Git_Commit" },
+    "schema_version": { "const": "v1" },
+    "ts": { "type": "string", "format": "date-time", "description": "Timestamp of the commit" },
+    "commitHash": { "type": "string", "description": "Commit hash" },
+    "author": { "type": "string", "description": "Author of the commit" },
+    "message": { "type": "string", "description": "Commit message" },
+    "filesChanged": { "type": "array", "items": { "type": "string" }, "description": "List of files changed" }
   },
   "additionalProperties": true
 }

@@ -1,17 +1,18 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://your-org.com/events/TSD_Updated_v1.json",
   "title": "TSD_Updated.v1",
   "type": "object",
-  "required": ["type", "schema_version", "ts", "project", "tsdid"],
+  "required": ["type", "schema_version", "ts", "project", "tsdId"],
   "properties": {
-    "type": { "type": "string" },
-    "schema_version": { "type": "string", "pattern": "^v[0-9]+$" },
-    "ts": { "type": "string", "format": "date-time" },
-    "project": { "type": "string" },
-    "tsdid": { "type": "string" },
-    "artifact_paths": { "type": "array", "items": { "type": "string" } },
-    "canonical_hash": { "type": "string" },
-    "change_summary": { "type": "string" }
+    "type": { "const": "TSD_Updated" },
+    "schema_version": { "const": "v1" },
+    "ts": { "type": "string", "format": "date-time", "description": "Timestamp of the event" },
+    "project": { "type": "string", "description": "Project identifier" },
+    "tsdId": { "type": "string", "description": "Technical Specification Document identifier" },
+    "artifactPaths": { "type": "array", "items": { "type": "string" }, "description": "Paths to the artifacts" },
+    "canonicalHash": { "type": "string", "description": "Canonical hash of the document" },
+    "changeSummary": { "type": "string", "description": "Summary of changes made" }
   },
   "additionalProperties": true
 }

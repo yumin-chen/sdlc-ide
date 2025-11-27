@@ -1,15 +1,16 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://your-org.com/events/Artifact_Vectorized_v1.json",
   "title": "Artifact_Vectorized.v1",
   "type": "object",
-  "required": ["type", "schema_version", "ts", "artifact_id", "vector_id"],
+  "required": ["type", "schema_version", "ts", "artifactId", "vectorId"],
   "properties": {
-    "type": { "type": "string" },
-    "schema_version": { "type": "string", "pattern": "^v[0-9]+$" },
-    "ts": { "type": "string", "format": "date-time" },
-    "artifact_id": { "type": "string" },
-    "vector_id": { "type": "string" },
-    "metadata": { "type": "object" }
+    "type": { "const": "Artifact_Vectorized" },
+    "schema_version": { "const": "v1" },
+    "ts": { "type": "string", "format": "date-time", "description": "Timestamp of the event" },
+    "artifactId": { "type": "string", "description": "Artifact identifier" },
+    "vectorId": { "type": "string", "description": "Vector identifier" },
+    "metadata": { "type": "object", "description": "Metadata associated with the event" }
   },
   "additionalProperties": true
 }

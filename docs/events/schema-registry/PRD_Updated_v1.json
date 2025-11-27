@@ -1,19 +1,20 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://your-org.com/events/PRD_Updated_v1.json",
   "title": "PRD_Updated.v1",
   "type": "object",
-  "required": ["type", "schema_version", "ts", "project", "prdid", "author"],
+  "required": ["type", "schema_version", "ts", "project", "prdId", "author"],
   "properties": {
-    "type": { "type": "string" },
-    "schema_version": { "type": "string", "pattern": "^v[0-9]+$" },
-    "ts": { "type": "string", "format": "date-time" },
-    "project": { "type": "string" },
-    "prdid": { "type": "string" },
-    "author": { "type": "string" },
-    "commit_hash": { "type": "string" },
-    "delta_hash": { "type": "string" },
-    "required_checks": { "type": "array", "items": { "type": "string" } },
-    "meta": { "type": "object" }
+    "type": { "const": "PRD_Updated" },
+    "schema_version": { "const": "v1" },
+    "ts": { "type": "string", "format": "date-time", "description": "Timestamp of the event" },
+    "project": { "type": "string", "description": "Project identifier" },
+    "prdId": { "type": "string", "description": "Product Requirements Document identifier" },
+    "author": { "type": "string", "description": "Author of the update" },
+    "commitHash": { "type": "string", "description": "Commit hash for the update" },
+    "deltaHash": { "type": "string", "description": "Hash representing the changes made" },
+    "requiredChecks": { "type": "array", "items": { "type": "string" }, "description": "List of required checks" },
+    "meta": { "type": "object", "description": "Metadata associated with the event" }
   },
   "additionalProperties": true
 }

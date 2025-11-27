@@ -1,16 +1,17 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://your-org.com/events/Policy_Violation_v1.json",
   "title": "Policy_Violation.v1",
   "type": "object",
-  "required": ["type", "schema_version", "ts", "policy_id", "violation_details", "actor"],
+  "required": ["type", "schema_version", "ts", "policyId", "violationDetails", "actor"],
   "properties": {
-    "type": { "type": "string" },
-    "schema_version": { "type": "string", "pattern": "^v[0-9]+$" },
-    "ts": { "type": "string", "format": "date-time" },
-    "policy_id": { "type": "string" },
-    "violation_details": { "type": "string" },
-    "actor": { "type": "string" },
-    "document_id": { "type": "string" }
+    "type": { "const": "Policy_Violation" },
+    "schema_version": { "const": "v1" },
+    "ts": { "type": "string", "format": "date-time", "description": "Timestamp of the event" },
+    "policyId": { "type": "string", "description": "Policy identifier" },
+    "violationDetails": { "type": "string", "description": "Details of the violation" },
+    "actor": { "type": "string", "description": "Actor responsible for the violation" },
+    "documentId": { "type": "string", "description": "Document identifier" }
   },
   "additionalProperties": true
 }

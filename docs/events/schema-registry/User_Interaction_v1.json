@@ -1,16 +1,17 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://your-org.com/events/User_Interaction_v1.json",
   "title": "User_Interaction.v1",
   "type": "object",
-  "required": ["type", "schema_version", "ts", "user", "action", "document_id"],
+  "required": ["type", "schema_version", "ts", "user", "action", "documentId"],
   "properties": {
-    "type": { "type": "string" },
-    "schema_version": { "type": "string", "pattern": "^v[0-9]+$" },
-    "ts": { "type": "string", "format": "date-time" },
-    "user": { "type": "string" },
-    "action": { "type": "string", "enum": ["view", "edit", "comment"] },
-    "document_id": { "type": "string" },
-    "metadata": { "type": "object" }
+    "type": { "const": "User_Interaction" },
+    "schema_version": { "const": "v1" },
+    "ts": { "type": "string", "format": "date-time", "description": "Timestamp of the event" },
+    "user": { "type": "string", "description": "User performing the action" },
+    "action": { "type": "string", "enum": ["view", "edit", "comment"], "description": "Action performed by the user" },
+    "documentId": { "type": "string", "description": "Document identifier" },
+    "metadata": { "type": "object", "description": "Metadata associated with the event" }
   },
   "additionalProperties": true
 }
