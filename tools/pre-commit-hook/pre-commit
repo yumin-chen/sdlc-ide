@@ -1,0 +1,37 @@
+#!/bin/sh
+
+# This pre-commit hook is a placeholder to demonstrate the intended logic.
+# It will be updated to call the Document SDK's validator and serializer
+# once they are implemented.
+
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM -- "*.yaml" "*.yml")
+
+if [ -z "$STAGED_FILES" ]; then
+  exit 0
+fi
+
+echo "Running Document SDK pre-commit hook..."
+
+for FILE in $STAGED_FILES; do
+  echo "Validating and re-serializing $FILE..."
+
+  # Placeholder for SDK logic:
+  # 1. Validate against schema
+  #    if ! sdk-validate --file "$FILE"; then
+  #      echo "Error: $FILE is not valid according to its schema." >&2
+  #      exit 1
+  #    fi
+  #
+  # 2. Re-serialize to canonical format
+  #    sdk-serialize --file "$FILE" --in-place
+  #
+  # 3. Add the re-serialized file back to the staging area
+  #    git add "$FILE"
+
+  # Simulating a check. In a real script, the SDK would do this.
+  # For now, we'll just pretend it passed.
+  :
+done
+
+echo "Document SDK pre-commit hook finished."
+exit 0

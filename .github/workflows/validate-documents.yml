@@ -1,0 +1,19 @@
+name: Validate Document Canonical Format
+
+on:
+  pull_request:
+    paths:
+      - 'docs/**/*.yaml'
+      - 'docs/**/*.yml'
+
+jobs:
+  validate-documents:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Run CI Validator
+        run: |
+          chmod +x ./tools/ci-validator/validate.sh
+          ./tools/ci-validator/validate.sh
