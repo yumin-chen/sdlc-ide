@@ -41,6 +41,7 @@ SDLC_IDE requires a multi‑agent system capable of managing all document artifa
 **Conclusion:** A hybrid architecture is needed to maintain structure and flexibility.
 
 ## 2. Decision
+
 SDLC_IDE will adopt a **Hybrid Directed Graph Architecture** consisting of:
 
 
@@ -219,7 +220,7 @@ The Hybrid Directed Graph Architecture satisfies all operational and architectur
 - Not flexible for rich semantic links
 
 ## 6. Decision Outcome
-**Accepted.**
+**Pending**
 
 SDLC_IDE will use a **Hybrid Directed Graph Architecture** composed of:
 1. **Core DAG** (strict SDLC flow)
