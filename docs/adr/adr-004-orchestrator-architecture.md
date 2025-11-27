@@ -30,7 +30,7 @@ The Orchestrator will consume events from the event streaming layer for auditing
 
 ### Decision Making
 
-The Orchestrator will delegate decisions about semantic drift and contradictions to specialized agents, but will be responsible for initiating these checks and acting on their results.
+The Orchestrator will delegate decisions about semantic drift and contradictions to specialized agents, but will be responsible for initiating these checks and acting on their results. A concrete example of such an agent is the `ContradictionDetector`, the design of which is specified in `docs/agents/contradiction-detector.md`.
 
 ### Transaction Model
 

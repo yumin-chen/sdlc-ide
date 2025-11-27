@@ -185,4 +185,11 @@ Write permissions are enforced by the Governor:
 - **ADR-002 (Events)**: Events are published on file changes.
 - **ADR-003 (Embeddings)**: The embedding manifest and model versioning are defined here.
 - **ADR-004 (Orchestrator)**: The transaction model is implemented by the Orchestrator.
-- **(New) ADR for Governance**: Governor/OPA policy definitions need to be specified.
+- **ADR-009 (Governance and Policy Enforcement)**: Governor/OPA policy definitions are specified in this ADR.
+
+---
+## Operational Concerns
+
+- **Disk space**: As the workspace grows, a strategy for archiving old snapshots and pruning old events will be required.
+- **Backup/restore**: The primary backup mechanism is the version control system itself (`git push`). However, the state of any external vector database will need to be backed up separately.
+- **Multi-tenant**: If SDLC_IDE serves multiple projects, each project will have its own `.sdlc_ide/` workspace to ensure isolation.
