@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  opa:
+    image: openpolicyagent/opa:0.50.0-rootless
+    container_name: opa_policy_engine
+    command:
+      # Load policy and data recursively from /policy directory
+      - run
+      - --server
+      - --addr
+      - :8181
+      - --set
+      - decision_logs.console=true
+      - /policy
+    ports:
+      - "8181:8181"
+    volumes:
+      - ./policy:/policy:ro # Mount policy files
+      - ./templates:/templates:ro # Mount templates for quick testing
+    networks:
+      - policy_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8181/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  registry-api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: registry_enforcement_api
+    environment:
+      # OPA_URL points to the OPA service name in the docker-compose network
+      - OPA_URL=http://opa:8181/v1/data/template/authz
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./api:/app:rw
+    depends_on:
+      opa:
+        condition: service_healthy
+    networks:
+      - policy_net
+
+networks:
+  policy_net:
+    driver: bridge

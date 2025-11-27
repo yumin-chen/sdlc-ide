@@ -1,0 +1,9 @@
+{
+    "id": "test/valid:v1",
+    "provenance": {"created_by": "github:alice"},
+    "bindings": [{"role": "template_author", "principal": "github:alice"}],
+    "lifecycle": {
+        "transitions": [["draft", "review"]]
+    },
+    "spec": {"kind": "K8sDeployment"}
+}
