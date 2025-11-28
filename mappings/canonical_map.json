@@ -1,0 +1,16 @@
+{
+  "user": "USER",
+  "utilisateur": "USER",
+  "role": "USER_ROLE",
+  "manager": "USER_ROLE_MANAGER",
+  "gestionnaire": "USER_ROLE_MANAGER",
+  "resource": "RESOURCE",
+  "ressource": "RESOURCE",
+  "type": "RESOURCE_TYPE",
+  "document": "RESOURCE_TYPE_DOCUMENT",
+  "action": "ACTION",
+  "edit": "ACTION_EDIT",
+  "éditer": "ACTION_EDIT",
+  "authorization": "KEYWORD_AUTHORIZATION",
+  "authorisation": "KEYWORD_AUTHORIZATION"
+}

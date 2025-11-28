@@ -1,0 +1,5 @@
+utilisateur:
+  role: gestionnaire
+ressource:
+  type: document
+action: éditer
